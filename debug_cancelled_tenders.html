@@ -1,0 +1,2308 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Opportunities - eTenders Portal</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/icons/favicon green v2.ico">
+    
+    
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" crossorigin="anonymous" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" />
+<meta name="x-stylesheet-fallback-test" content="" class="sr-only" /><script>!function(a,b,c,d){var e,f=document,g=f.getElementsByTagName("SCRIPT"),h=g[g.length-1].previousElementSibling,i=f.defaultView&&f.defaultView.getComputedStyle?f.defaultView.getComputedStyle(h):h.currentStyle;if(i&&i[a]!==b)for(e=0;e<c.length;e++)f.write('<link href="'+c[e]+'" '+d+"/>")}("position","absolute",["/lib/bootstrap/dist/css/bootstrap.min.css"], "rel=\u0022stylesheet\u0022 crossorigin=\u0022anonymous\u0022 integrity=\u0022sha384-ggOyR0iXCbMQv3Xipma34MD\u002BdH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T\u0022 ");</script>
+    
+    
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-148237721-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-148237721-1');
+        </script>
+    
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/site.css" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/icons/favicon green v2.ico">
+</head>
+<body>
+    <!-- Notification/Bookmark Modal -->
+    <!-- TODO: Update Modal to be generic across the board -->
+    <div class="modal fade" id="TempPopupModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-info">
+                    <h5 class="modal-title"><i class="text-warning fa fa-exclamation-circle"></i>Login Required</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modal-body">
+                    <h5>It seems like you are not logged in. Please note that to bookmark or subscribe to tender notifications you need to be logged-in.</h5>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-dismiss="modal" id="LoginButton">Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Generic Modal -->
+    <div id="genericModal" name="genericModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning" id="modal-title">
+                    <!--Dynamic Content-->
+                </div>
+                <div class="modal-body" id="modal-body-gn">
+                    <!--Dynamic Content-->
+                </div>
+                <div class="modal-footer bg-light">
+                    <button data-dismiss="modal" type="button" class="btn btn-danger">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <div class="container">
+            <div class="col-md-12 px-0">
+                <a href="/">
+               <img src="/images/header-logoEtenders.png" style="float:left;" width="160" alt="Logo" />
+            </a>
+            <img src="/images/header-saFlag.png" style="float:right;" alt="flg" />
+
+      <!--  <nav class="navbar navbar-expand-lg navbar-dark gmc-header" align>
+            <div class="container-fluid">
+
+                <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#GMC-Navigation" aria-controls="navbarsExample04" aria-expanded="false" aria-label="Toggle navigation"> <span class="navbar-toggler-icon"></span> </button>
+                <div class="navbar-collapse collapse" id="GMC-Navigation">
+                    <ul class="navbar-nav mb-2 mb-md-0 w-100">
+                        <li class="nav-item"> <a id="homeLink" href="/" class="nav-link link-light px-2" aria-current="page"> Home </a> </li>
+                        <li class="nav-item"> <a id="tendersLink" href="/Home/opportunities?id=1" class="nav-link link-light px-2" aria-current="page"> Tender Opportunities </a> </li>
+                        <li class="nav-item"> <a href="/Home/ProcurementPlans" class="nav-link link-light px-2" aria-current="page"> Procurement Plans </a> </li>
+                        <li class="nav-item"> <a href="https://www.data.etenders.gov.za" target="_blank" class="nav-link link-light px-2" aria-current="page"> Procurement Data </a> </li>
+            
+                        <li class="nav-item dropdown">
+                            <a id="aboutLink" href="#" class="nav-link link-light px-2 dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">About</a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="/Home/About">About E-Tender</a></li>
+                                <li><a class="dropdown-item" href="/Home/VisionMission">Vision and Mission</a></li>
+                                <li><a class="dropdown-item" href="/Home/Mandate">Mandate</a></li>
+                            </ul>
+                        </li>
+
+
+
+                            <li class="nav-item"> <a href="https://admin.etenders.gov.za/Identity/Account/Login?ReturnUrl=%2F" class="nav-link link-light px-2" aria-current="page"> Login </a> </li>
+
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        -->
+         </div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+
+
+        <main role="main" class="pb-3" style="float:left;width:100%;">
+            
+<link href="/css/datatables.min.css" rel="stylesheet" />
+<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">-->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+
+<link href="/css/chosen/prism.css" rel="stylesheet" />
+<link href="/css/chosen/chosen.css" rel="stylesheet" />
+<link href="/css/opp.css" rel="stylesheet" />
+
+
+<div class="row mx-0">
+    <div id="myDIV" class="col-md-12 px-0 filter">
+        <ul class="nav nav-pills nav-fill">
+            <li class="nav-item active" id="btnActive">
+                <a href="#"><i class="fas fa-bullhorn" style="display:inline!important"></i> Currently Advertised</a>
+            </li>
+            <li class="nav-item" id="btnAward">
+                <a href="#"><i class="fas fa-award"></i> Awarded <span>&nbsp&nbsp&nbsp</span></a>
+            </li>
+            <li class="nav-item" id="btnCancelled">
+                <a href="#"><i class="far fa-times-circle"></i> Cancelled</a>
+            </li>
+            <li class="nav-item" id="btnClosed">
+                <a href="#"><i class="fas fa-lock"></i> Closed <span>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp </span></a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div id="refiner-info">
+
+            <div id="disclaimer" class="alert alert-warning alert-dismissible fade show" role="alert">
+                <div class="row">
+                    <div class="col-8">
+                        <i class="fa-solid fa-circle-info"></i> Use <i style="color:#41ad49" class="fas fa-search"></i> <b> Quick Find.</b> Please note we are only searching open or active tenders.<br />
+
+                    </div>
+                    <div class="col-4">
+                        <button type="button" class="accept-policy close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">Got it, Thanks!<i class="far fa-times-circle"></i></span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="disclaimer" class="alert alert-warning alert-dismissible fade show" role="alert">
+                <div class="row">
+                    <div class="col-8">
+                        <i class="fa-solid fa-circle-info"></i>Use <i style="color:#cccccc" class="fas fa-eye-slash"></i> <i style="color:#41ad49" class="fas fa-eye"></i> <b> Advanced Search</b> to filter through tenders with more control and customerzation.<br />
+                    </div>
+                    <div class="col-4">
+                        <button type="button" class="accept-policy close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">Got it, Thanks!<i class="far fa-times-circle"></i></span>
+                        </button>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div id="disclaimer" class="alert alert-warning alert-dismissible fade show" role="alert">
+                <div class="row">
+                    <div class="col-8">
+
+                        <i class="fa-solid fa-circle-info"></i>On the tender results table below, please use the <span><img src="/images/plus-24.png" style="width:16px;margin:0 4px;" /></span> sign to expand tender details and to download tender documents.
+                    </div>
+                    <div class="col-4">
+                        <button type="button" class="accept-policy close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">Got it, Thanks!<i class="far fa-times-circle"></i></span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row quickfind">
+                <div class="col-md-7"><h4>Listing all <span class="green tenderTag">currently advertised</span> tender opportunities</h4></div>
+                <div class="col-md-5 displayFlex">
+                    <div class="search-btns quickfindbtn"><a href="/Home?myTab=1"><i class="fas fa-search"></i> QuickFind</a></div>
+                    <div id="advSearchbtn" class="search-btns advSearchbtn">
+                        <a title="Show or hide advanced filters" id="show_hide"><i style="color:#cccccc; cursor:pointer;" class="fas fa-eye-slash"></i><i style="color:#41ad49" class="fas fa-eye"></i>Advanced Search</a>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="filters">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h4>Advanced Search Filters</h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Category - Choose one or more</h6>
+                        <div class="multi-drp">
+                            <select class="form-control chosen-select categorieslist" data-placeholder="-- Any Category(s) --" id="categorieslist" multiple="" name="categorieslist"><option value="30">Accommodation</option>
+<option value="41">Activities auxiliary to financial service and insurance activities.</option>
+<option value="51">Activities of head offices; management consultancy activities</option>
+<option value="7">Activities of households as employers of domestic personnel</option>
+<option value="44">Administrative and support activities</option>
+<option value="45">Advertising and market research</option>
+<option value="23">Air transport</option>
+<option value="18">Architectural and engineering activities; technical testing and analysis</option>
+<option value="46">Arts, entertainment and recreation</option>
+<option value="13">Civil engineering</option>
+<option value="73">Computer programming, consultancy and related activities</option>
+<option value="27">Construction</option>
+<option value="39">Construction of buildings</option>
+<option value="79">Creative, arts and entertainment activities</option>
+<option value="19">Disposals: General</option>
+<option value="4">Education</option>
+<option value="77">Electricity, gas, steam and air conditioning</option>
+<option value="38">Employment activities</option>
+<option value="5">Financial and insurance activities</option>
+<option value="81">Financial service activities, except insurance and pension funding</option>
+<option value="16">Food and beverage service activities</option>
+<option value="17">Human health activities</option>
+<option value="34">Human health and social work activities</option>
+<option value="40">Information and communication</option>
+<option value="75">Information service activities</option>
+<option value="83">Insurance, reinsurance and pension funding, except compulsory social security</option>
+<option value="50">Land transport and transport via pipelines</option>
+<option value="54">Legal and accounting activities</option>
+<option value="1">Libraries, archives, museums and other cultural activities</option>
+<option value="20">Manufacture of basic metals</option>
+<option value="15">Manufacture of chemicals and chemical products</option>
+<option value="29">Manufacture of coke and refined petroleum products</option>
+<option value="36">Manufacture of computer, electronic and optical products</option>
+<option value="42">Manufacture of electrical equipment</option>
+<option value="3">Manufacture of fabricated metal products, except machinery and equipment</option>
+<option value="14">Manufacture of furniture</option>
+<option value="26">Manufacture of machinery and equipment n.e.c.</option>
+<option value="80">Manufacture of motor vehicles, trailers and semi-trailers</option>
+<option value="69">Manufacture of other non-metallic mineral products</option>
+<option value="9">Manufacture of paper and paper products</option>
+<option value="33">Manufacture of rubber and plastics products</option>
+<option value="87">Manufacture of textiles</option>
+<option value="66">Manufacturing</option>
+<option value="31">Mining and quarrying</option>
+<option value="25">Mining of coal and lignite</option>
+<option value="8">Mining support service activities</option>
+<option value="64">Motion picture, video and television programme production, sound recording and music publishing activities</option>
+<option value="68">Office administrative, office support and other business support activities</option>
+<option value="67">Other manufacturing</option>
+<option value="57">Other personal service activities</option>
+<option value="32">Other professional, scientific and technical activities</option>
+<option value="48">Other service activities</option>
+<option value="85">Postal and courier activities</option>
+<option value="60">Printing and reproduction of recorded media</option>
+<option value="90">Professional, scientific and technical activities</option>
+<option value="35">Programming and broadcasting activities</option>
+<option value="58">Publishing activities</option>
+<option value="59">Real estate activities</option>
+<option value="47">Remediation activities and other waste management services</option>
+<option value="71">Rental and leasing activities</option>
+<option value="43">Repair and installation of machinery and equipment</option>
+<option value="2">Residential care activities</option>
+<option value="6">Scientific research and development</option>
+<option value="62">Security and investigation activities</option>
+<option value="10">Services to buildings and landscape activities</option>
+<option value="78">Services: Building</option>
+<option value="49">Services: Civil</option>
+<option value="84">Services: Electrical</option>
+<option value="74">Services: Functional (Including Cleaning and Security Services)</option>
+<option value="61">Services: General</option>
+<option value="86">Services: Professional</option>
+<option value="82">Sewerage</option>
+<option value="76">Specialised construction activities</option>
+<option value="56">Sports activities and amusement and recreation activities</option>
+<option value="70">Supplies: Clothing/Textiles/Footwear</option>
+<option value="22">Supplies: Computer Equipment</option>
+<option value="52">Supplies: Electrical Equipment</option>
+<option value="55">Supplies: General</option>
+<option value="89">Supplies: Medical</option>
+<option value="12">Supplies: Perishable Provisions</option>
+<option value="28">Supplies: Stationery/Printing</option>
+<option value="63">Telecommunications</option>
+<option value="72">Transportation and storage</option>
+<option value="65">Travel agency, tour operator, reservation service and related activities</option>
+<option value="37">Warehousing and support activities for transportation</option>
+<option value="88">Waste collection, treatment and disposal activities; materials recovery</option>
+<option value="21">Water collection, treatment and supply</option>
+<option value="11">Water supply; sewerage, waste management and remediation activities</option>
+<option value="53">Water transport</option>
+<option value="24">Wholesale and retail trade and repair of motor vehicles and motorcycles</option>
+</select>
+                            <i class="fas fa-caret-down" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>
+                            Provinces - Choose one or more
+                        </h6>
+                        <div class="multi-drp">
+                            <select class="form-control chosen-select provincelist" data-placeholder="-- Any Province(s) --" id="provincelist" multiple="" name="provincelist"><option value="5">Eastern Cape</option>
+<option value="10">Free State</option>
+<option value="8">Gauteng</option>
+<option value="4">KwaZulu-Natal</option>
+<option value="6">Limpopo</option>
+<option value="9">Mpumalanga</option>
+<option value="7">National</option>
+<option value="1">North West</option>
+<option value="2">Northern Cape</option>
+<option value="3">Western Cape</option>
+</select>
+                            <i class="fas fa-caret-down" aria-hidden="true"></i><!--<i class="fas fa-caret-square-down" aria-hidden="true"></i>-->
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Organ of State - Choose one or more</h6>
+                        <div class="multi-drp">
+                            <select class="form-control chosen-select departments" data-placeholder="-- Any Organ of State(s) --" id="departments" multiple="" name="departments"><option value="876"> South African Reserve Bank</option>
+<option value="1">Abaqulusi Local Municipality</option>
+<option value="2">Academy of Science of South Africa</option>
+<option value="3">Accounting Standards Board</option>
+<option value="4">African Exploration Mining and Finance Corporation Soc Ltd</option>
+<option value="5">Agr&#xE9;ment South Africa</option>
+<option value="6">Agricultural Research Council</option>
+<option value="7">Agricultural Sector Education and Training Authority</option>
+<option value="859">Agriculture an Rural Development KZ - KZN Farming Enterprise</option>
+<option value="8">Air Chefs SOC Ltd</option>
+<option value="9">Air Traffic and Navigation Services Company Limited</option>
+<option value="11">Airports Company of South Africa</option>
+<option value="10">Airports Company of South Africa Limited</option>
+<option value="12">Alexkor Limited</option>
+<option value="13">Alfred Duma Local Municipality</option>
+<option value="858">Alfred Nzo &#x2013; Development agency </option>
+<option value="14">Alfred Nzo District Municipality</option>
+<option value="15">Amahlathi Local Municipality</option>
+<option value="16">Amajuba District Municipality</option>
+<option value="17">Amathole District Municipality</option>
+<option value="18">Amatola Water Board</option>
+<option value="806">Amazwi - South African Museum of Literature</option>
+<option value="19">ARMSCOR</option>
+<option value="20">Arts &amp; Culture</option>
+<option value="21">Artscape</option>
+<option value="763">Atlantis Special Economic Zone SOC LTD</option>
+<option value="23">AUTOPAX</option>
+<option value="24">Banking Sector Education and Training Authority</option>
+<option value="25">Ba-Phalaborwa Local Municipality</option>
+<option value="26">Basic Education</option>
+<option value="27">Beaufort West Municipality</option>
+<option value="827">Bela Bela Local Municipality</option>
+<option value="803">Bergrivier - WC Local Municipality</option>
+<option value="28">Big Five Hlabisa Local Municipality</option>
+<option value="29">Bitou Municipality</option>
+<option value="31">Blouberg Municipality</option>
+<option value="32">Blue crane route local municipality</option>
+<option value="33">Bojanala District Municipality</option>
+<option value="842">Border Management Authority</option>
+<option value="835">Boxing South Africa</option>
+<option value="34">BRAND RSA</option>
+<option value="35">Breede Valley Municipality</option>
+<option value="756">Breede-Gouritz Catchment Management Agency</option>
+<option value="36">Broadband Infraco SOC</option>
+<option value="37">Broadband Infrastructure Company (Pty) Ltd</option>
+<option value="38">BUFFALO CITY METROPOLITAN DEVELOPMENT AGENCY</option>
+<option value="39">Buffalo City Metropolitan Municipality</option>
+<option value="40">Buffalo City TVET</option>
+<option value="41">Bushbuckridge Local Municipality</option>
+<option value="42">Cacadu Development Agency</option>
+<option value="43">Cape Agency For Sustainable Integrated Development in Rural Areas (CASIDRA)</option>
+<option value="44">Cape Agulhas Municipality</option>
+<option value="45">Cape Town International Convention Centre</option>
+<option value="857">Cape Town Stadium (RF) SOC LIMITED</option>
+<option value="46">Cape Winelands District Municipality</option>
+<option value="47">Capricorn District Municipality</option>
+<option value="789">Capricorn TVET College</option>
+<option value="48">CASIDRA (SOC) Limited</option>
+<option value="49">Castle Control Board</option>
+<option value="50">Cederberg Municipality</option>
+<option value="51">CEF (Pty) Ltd</option>
+<option value="52">CENTLEC SOC LTD</option>
+<option value="53">Central Karoo District Municipality</option>
+<option value="54">Centre for Public Service Innovation</option>
+<option value="55">Chemical Industries Education and Training Authority</option>
+<option value="56">Chief Albert Luthuli Municipality</option>
+<option value="57">Chris Hani District Municipality</option>
+<option value="58">City Council of Johannesburg</option>
+<option value="59">City of Cape Town</option>
+<option value="60">City of Ekurhuleni</option>
+<option value="61">City Of Joburg Property Company (SOC) Ltd</option>
+<option value="62">City of Johannesburg - Metro Bus</option>
+<option value="852">City of Johannesburg - Metropolitan Trading Company</option>
+<option value="63">City of Tshwane</option>
+<option value="801">City of Tshwane - Housing Company</option>
+<option value="64">City of uMhlathuze Municipality</option>
+<option value="65">City Power &#x2013; Johannesburg</option>
+<option value="66">Civilian Secretariat for Police</option>
+<option value="67">Coega Development Cooperation</option>
+<option value="68">COGTA</option>
+<option value="69">COJ - City Power</option>
+<option value="70">Commission for Conciliation Mediation &amp; Arbitration</option>
+<option value="764">Commission for Gender Equality</option>
+<option value="71">Communications</option>
+<option value="72">Community Schemes Ombud Service</option>
+<option value="73">Companies and Intellectual Property Commission</option>
+<option value="74">Companies Tribunal</option>
+<option value="75">Competition Commission</option>
+<option value="76">Competition Tribunal</option>
+<option value="795">Constitution Hill Development Company</option>
+<option value="77">Construction Education and Training Authority</option>
+<option value="78">Construction Industry Development Board</option>
+<option value="79">Correctional Services</option>
+<option value="849">Correctional Services - Judicial Inspectorate</option>
+<option value="80">Council for Geoscience</option>
+<option value="81">Council for Medical Schemes</option>
+<option value="82">Council for Mineral Technology</option>
+<option value="83">Council for Scientific and Industrial Research (CSIR)</option>
+<option value="84">Council for the Built Environment</option>
+<option value="85">Council on Higher Education</option>
+<option value="770">Cross-Border Road Transport Agency</option>
+<option value="86">CSIR</option>
+<option value="87">Culture Arts, Tourism, Hospitality And Sport Sector Education And Training Authority (CATHSSETA)</option>
+<option value="88">Dannhauser Local Municipality</option>
+<option value="89">Dawid kruiper Local Municipality</option>
+<option value="90">Defence</option>
+<option value="91">DENEL (Pty) Ltd</option>
+<option value="92">Department of Agriculture, Land Reform &amp; Rural Development</option>
+<option value="93">Department of Community Safety and Transport Management</option>
+<option value="94">Department of Corporative Governance and Traditional Affairs</option>
+<option value="95">DEPARTMENT OF ECONOMIC, SMALL BUSINESS DEVELOPMENT, TOURISM AND ENVIRONMENTAL AFFAIRS</option>
+<option value="745">Department of Land Reform &amp; Rural Development</option>
+<option value="96">Department of Sports, Arts &amp; Culture</option>
+<option value="97">Department of Women, Youth and Persons with Disabilities (DWYPD)</option>
+<option value="98">DEPARTMENTOF COMMUNICATIONS AND DIGITAL TECHNOLOGIES</option>
+<option value="99">Development Bank of Southern Africa</option>
+<option value="100">Die Afrikaanse Taal Museum</option>
+<option value="101">Dihlabeng Local Municipality</option>
+<option value="102">Dikgatlong Local Municipality</option>
+<option value="103">Dipaliseng local Municipality</option>
+<option value="104">Ditsobotla Local Municipality</option>
+<option value="105">Ditsong: Museums of South Africa</option>
+<option value="106">Dr Beyers Naude Local Municipality</option>
+<option value="107">Dr JS Moroka Local Municipality</option>
+<option value="108">Dr Kenneth Kaunda District Municipality</option>
+<option value="109">Dr Nkosazana Dlamini Zuma Local Municipality</option>
+<option value="110">Dr Pixley Ka Isaka Seme Local Municipality</option>
+<option value="111">DR PIXLEY KA SEME MEMORIAL HOSPITAL</option>
+<option value="112">Dr Ruth Mompati District Municipality</option>
+<option value="113">Dr Ruth Segomotsi District Municipality</option>
+<option value="114">Dr. Kenneth Kaunda District Municipality Economic Agency</option>
+<option value="115">Drakenstein Municipality</option>
+<option value="116">Driving Licence Card Account</option>
+<option value="117">Dube Tradeport</option>
+<option value="118">East London IDZ</option>
+<option value="119">East Rand Water Care Company</option>
+<option value="769">Eastcape Midlands Tvet College</option>
+<option value="873">Eastern Cape - Agriculture </option>
+<option value="120">Eastern Cape - Automotive Industry Development Centre Eastern Cape SOC Ltd</option>
+<option value="778">Eastern Cape - Cooperative Governance  and Traditional Affairs</option>
+<option value="121">Eastern Cape - East London Industrial Development Zone Corporation</option>
+<option value="122">Eastern Cape - Eastern Cape Development Corporation</option>
+<option value="123">Eastern Cape - Eastern Cape Gambling and Betting Board</option>
+<option value="124">Eastern Cape - Eastern Cape Parks and Tourism Agency</option>
+<option value="125">Eastern Cape - Eastern Cape Rural Finance Corporation Limited</option>
+<option value="126">Eastern Cape - Eastern Cape Socio-Economic Consultative Council</option>
+<option value="127">Eastern Cape - Economic Development &amp; Environmental Affairs</option>
+<option value="128">Eastern Cape - Education</option>
+<option value="129">Eastern Cape - Health</option>
+<option value="130">Eastern Cape - Human Settlements</option>
+<option value="131">Eastern Cape - Legislature</option>
+<option value="132">Eastern Cape - Local Government and Traditional Affairs</option>
+<option value="133">Eastern Cape - Mayibuye Transport Corporation</option>
+<option value="134">Eastern Cape - Officer of the Premier</option>
+<option value="135">Eastern Cape - Provincial Treasury</option>
+<option value="136">Eastern Cape - Public Works and Infrastructure</option>
+<option value="137">Eastern Cape - Rural Development and Agrarian Reform</option>
+<option value="138">Eastern Cape - Safety and Liaison</option>
+<option value="139">Eastern Cape - Social Development</option>
+<option value="140">Eastern Cape - Sosio Economic Consultative Council</option>
+<option value="141">Eastern Cape - Sport Recreation Arts and Culture</option>
+<option value="142">Eastern Cape - Transport</option>
+<option value="747">Eastern Cape CET College</option>
+<option value="765">Eastern Cape Liquor Board</option>
+<option value="143">EASTERN CAPE PARKS &amp; TOURISM AGENCY</option>
+<option value="144">Eastern Cape Rural Development Agency</option>
+<option value="145">Economic Development</option>
+<option value="147">Education</option>
+<option value="146">Education, Training and Development Practices SETA</option>
+<option value="148">eDumbe Local Municipality</option>
+<option value="149">Ehlanzeni District Municipality</option>
+<option value="877">Ehlanzeni TVET College</option>
+<option value="751">Ekurhuleni East Tvet College</option>
+<option value="150">Ekurhuleni Housing Company</option>
+<option value="151">Ekurhuleni Water Care Company (ERWAT)</option>
+<option value="152">Ekurhuleni West TVET College</option>
+<option value="761">Elangeni TVET College</option>
+<option value="153">Electoral Commission (IEC)</option>
+<option value="154">Elias Motsoaledi Local Municipality</option>
+<option value="155">Elundini Local Municipality</option>
+<option value="156">Emadlangeni Local Municipality</option>
+<option value="157">EMAKHAZENI LOCAL MUNICIPALITY</option>
+<option value="158">Emalahleni Local Municipality</option>
+<option value="159">Emfuleni Local Municipality</option>
+<option value="160">Emthanjeni Local Municipality</option>
+<option value="161">Endumeni Local Municipality</option>
+<option value="162">Energy</option>
+<option value="788">Energy and Water Sector Education and Training Authority</option>
+<option value="163">ENGCOBO LOCAL MUNICIPALITY</option>
+<option value="164">Enoch Mgijima Local Municipality</option>
+<option value="165">Environmental Affairs</option>
+<option value="166">Ephraim Mogale Local Municipality</option>
+<option value="790">ESAYIDI TVET COLLEGE</option>
+<option value="167">ESKOM</option>
+<option value="860">Eskom National Transmission Company of South Africa </option>
+<option value="168">Estate Agency Affairs Board</option>
+<option value="169">Ethekwini Metropolitan Municipality</option>
+<option value="170">Export Credit Insurance Corporation of South Africa Limited</option>
+<option value="823">False Bay TVET College</option>
+<option value="171">Fetakgomo Tubatse Local Municipality</option>
+<option value="840">Fezile Dabi District Municipality</option>
+<option value="172">Fiber Processing Manufacturing Sector Education and Training Authority</option>
+<option value="173">Film and Publication Board</option>
+<option value="794">Finance and Accounting Services Sector Education and Training Authority (Fasset)</option>
+<option value="174">Financial and Accounting Services SETA</option>
+<option value="175">Financial and Fiscal Commission</option>
+<option value="176">Financial Intelligence Centre</option>
+<option value="177">FINANCIAL SECTOR CONDUCT AUTHORITY (FSCA)</option>
+<option value="178">Financial Services Board</option>
+<option value="797">Flavius Mareka TVET College</option>
+<option value="179">Food and Beverages Manufacturing Industry</option>
+<option value="808">Fort Cox Agriculture and Forestry Training Institute</option>
+<option value="181">Francis Baard District Municipality</option>
+<option value="182">Free State - Agriculture and Rural Development</option>
+<option value="183">Free State - Corporate Governance Traditional Affairs</option>
+<option value="774">Free State - Economic, Small Business Development and Environmental Affairs (DESTEA)</option>
+<option value="184">Free State - Education</option>
+<option value="807">Free State - Fleet Management </option>
+<option value="185">Free State - Free State Development Corporation</option>
+<option value="186">Free State - Free State Gambling, Liquor and Tourism Authority</option>
+<option value="187">Free State - Free State Tourism Authority</option>
+<option value="188">Free State - Health</option>
+<option value="772">Free State - Human Settlement</option>
+<option value="855">Free State - Legislature </option>
+<option value="372">Free State - Maluti-A-Phofung Special Economic Zone</option>
+<option value="189">Free State - Office of the Premier</option>
+<option value="773">Free State - Police, Roads and Transport</option>
+<option value="190">Free State - Provincial Treasury</option>
+<option value="191">Free State - Public Works and Infrastructure. </option>
+<option value="192">Free State - Social Development</option>
+<option value="193">Free State - Sport Arts Culture &amp; Recreation</option>
+<option value="194">Freedom Park Trust</option>
+<option value="195">Gamagara Local Municipality</option>
+<option value="196">Garden Route District Local Municipality</option>
+<option value="197">Ga-Segonyana Local Municipality</option>
+<option value="198">Gauteng - Agriculture and Rural Development</option>
+<option value="22">Gauteng - Automotive Industry Development Centre (AIDC)</option>
+<option value="199">Gauteng &#x2013; Community Education and Training College</option>
+<option value="200">Gauteng - Community Safety</option>
+<option value="201">Gauteng - Co-operative Governance &amp; Traditional Affairs (COGTA)</option>
+<option value="202">Gauteng - Economic Development</option>
+<option value="206">Gauteng - Economic Development Agency</option>
+<option value="203">Gauteng - Education</option>
+<option value="204">Gauteng - Gauteng Department of e-Government</option>
+<option value="205">Gauteng - Gauteng Department of Human Settlements</option>
+<option value="207">Gauteng - Gauteng Enterprise Propeller</option>
+<option value="208">Gauteng - Gauteng Gambling Board</option>
+<option value="209">Gauteng - Gauteng Infrastructure Funding Agency</option>
+<option value="210">Gauteng - Gauteng Tourism Authority</option>
+<option value="211">Gauteng - Gautrain Management Agency</option>
+<option value="212">Gauteng - Health</option>
+<option value="213">Gauteng - Infrastructure Development</option>
+<option value="214">Gauteng - Legislature</option>
+<option value="215">Gauteng - Officer of the Premier</option>
+<option value="216">Gauteng - Provincial Treasury</option>
+<option value="217">Gauteng - Roads and Transport</option>
+<option value="218">Gauteng - Social Development</option>
+<option value="219">Gauteng - Sport Arts Culture and Recreation</option>
+<option value="220">Gauteng City Region Academy</option>
+<option value="221">Gauteng Department of Social Development</option>
+<option value="819">Gauteng Film Commission - Sport, Arts , Culture and Recreation </option>
+<option value="222">Gauteng G-Fleet</option>
+<option value="223">Gauteng Growth and Development Agency (GGDA)</option>
+<option value="224">Gauteng Partnership Fund</option>
+<option value="225">George Municipality</option>
+<option value="226">Gert Sibande District Municipality</option>
+<option value="227">GERT SIBANDE TVET COLLEGE</option>
+<option value="228">Govan Mbeki Local Municipality</option>
+<option value="755">Government Communications (GCIS)</option>
+<option value="229">Government Pensions Administration Agency (GPAA)</option>
+<option value="768">Government Printing Works</option>
+<option value="230">Government Technical Advisory Centre (GTAC)</option>
+<option value="231">Great Kei Municipality</option>
+<option value="817">Great North Transport (SOC)Ltd</option>
+<option value="232">Greater Giyani Municipality</option>
+<option value="233">Greater Kokstad Local Municipality</option>
+<option value="234">Greater Letaba Local Municipality</option>
+<option value="235">Greater Taung Local Municipality</option>
+<option value="236">Greater Tzaneen Municipality</option>
+<option value="237">Hantam Local Municipality</option>
+<option value="238">Harry Gwala Development Agency</option>
+<option value="239">Harry Gwala District Municipality</option>
+<option value="240">Health</option>
+<option value="241">Health and Welfare Sector Education and Training Authority</option>
+<option value="242">Hessequa Municipality</option>
+<option value="243">Higher Education &amp; Training</option>
+<option value="872">Higher education and training - Boland TVET College</option>
+<option value="866">Higher Education and Training - Central Johannesburg College</option>
+<option value="830">Higher Education and Training - College of Cape Town</option>
+<option value="868">Higher Education and Training - Mnambithi TVET College</option>
+<option value="822">Higher Education and Training - Mopani East TVET College</option>
+<option value="244">Home Affairs</option>
+<option value="245">Housing Development Agency</option>
+<option value="246">Human Sciences Research Council</option>
+<option value="247">Human Settlements</option>
+<option value="248">IKHALA PUBLIC TVET COLLEGE</option>
+<option value="793">ILembe - Enterprise iLembe Economic Development Agency</option>
+<option value="249">ILembe District Municipality</option>
+<option value="250">Impendle Local Municipality</option>
+<option value="251">Independent Communications Authority of South Africa (ICASA)</option>
+<option value="252">Independent Development Trust</option>
+<option value="253">Independent Police Investigative Directorate</option>
+<option value="744">Independent Power Producer Office (IPPO) - part of Department of&#xA;Mineral Resources and Energy</option>
+<option value="254">Independent Regulatory Board for Auditors</option>
+<option value="255">Industrial Development Corporation of South Africa Limited</option>
+<option value="870">Information Regulator</option>
+<option value="256">Ingonyama Trust Board</option>
+<option value="257">Ingquza Hill Local Municipality</option>
+<option value="780">Ingwe Tvet College</option>
+<option value="258">Inkomati Catchment Management Agency</option>
+<option value="259">Inkosi Langalibalele Local Municipality</option>
+<option value="260">Insurance Sector Education and Training Authority</option>
+<option value="261">Interfront</option>
+<option value="262">International Relations &amp; Cooperation</option>
+<option value="263">International Trade Administration Commission</option>
+<option value="264">Intsika Yethu Local Municipality</option>
+<option value="265">Inxuba Yethemba Local Municipality</option>
+<option value="266">iSimangaliso Wetland Park</option>
+<option value="267">ITHALA SOC LIMITED</option>
+<option value="268">Iziko Museums of Cape Town</option>
+<option value="269">JB Marks Local Municipality</option>
+<option value="270">JOBURG THEATRE (SOC) LTD</option>
+<option value="777">Joe Gqabi - Economic Development Agency (Jogeda)  </option>
+<option value="271">Joe Gqabi District Municipality</option>
+<option value="272">Joe Morolong Local Municipality</option>
+<option value="676">Johannes Phumani Phungula local Municipality</option>
+<option value="273">Johannesburg City Parks and Zoo</option>
+<option value="274">Johannesburg Development Agency</option>
+<option value="275">Johannesburg Market</option>
+<option value="276">Johannesburg Metropolitan Bus Services (SOC) Ltd</option>
+<option value="277">Johannesburg Road Agency (JRA)</option>
+<option value="278">Johannesburg Social Housing Company (JOSHCO)</option>
+<option value="279">Johannesburg Water</option>
+<option value="280">John Taolo Gaetsewe District Municipality</option>
+<option value="862">Jozini - KZ Local Municipality</option>
+<option value="281">Justice &amp; Constitutional Development</option>
+<option value="282">Kagisano-Molopo Local Municiality</option>
+<option value="283">Kamiesberg Local Municipality</option>
+<option value="284">Kannaland Municipality</option>
+<option value="285">Kareeberg Municipality</option>
+<option value="286">Karoo Hoogland Local Municipality</option>
+<option value="287">Kgatelopele Local Municipality</option>
+<option value="288">Kgetlengrivier Local municipality</option>
+<option value="289">Khai/Garib Local Municipality</option>
+<option value="290">Khai-Ma Local Municipality</option>
+<option value="291">Kheis Local Municipality</option>
+<option value="292">King Cetshwayo Municipality</option>
+<option value="293">King Hintsa College</option>
+<option value="294">King Sabata Dalindyebo Local Municipality</option>
+<option value="295">Knysna Municipality</option>
+<option value="296">Komatiland Forests (SOC) Ltd</option>
+<option value="297">Kopanong Local Municipality</option>
+<option value="298">Kouga Municipality</option>
+<option value="299">Koukamma Municipality</option>
+<option value="300">Kwadukuza Municipality</option>
+<option value="301">Kwa-Zulu Natal - Agri-Business Development Agency</option>
+<option value="302">Kwazulu Natal - Agriculture Environmental Affairs and Rural Development</option>
+<option value="303">Kwazulu Natal - Arts and Culture</option>
+<option value="304">Kwazulu Natal - Community Safety and Liaison</option>
+<option value="305">Kwazulu Natal - Cooperative Governance and Traditional Affairs</option>
+<option value="306">Kwazulu Natal - Department of Agriculture and Rural Develeopment</option>
+<option value="307">Kwa-Zulu Natal - Dube TradePort Corporation</option>
+<option value="308">Kwazulu Natal - Economic Development, Tourism and Environ Affairs</option>
+<option value="309">Kwazulu Natal - Education</option>
+<option value="310">Kwa-Zulu Natal - Ezemvelo KwaZulu-Natal Wildlife</option>
+<option value="311">Kwazulu Natal - Health</option>
+<option value="312">Kwazulu Natal - Human Settlements</option>
+<option value="313">Kwa-Zulu Natal - Ithala Development Finance Corporation</option>
+<option value="314">Kwa-Zulu Natal - KwaZulu-Natal Gaming and Betting Board</option>
+<option value="315">Kwa-Zulu Natal - KwaZulu-Natal Provincial Planning and Development Commission</option>
+<option value="781">Kwa-Zulu Natal - Legislature</option>
+<option value="316">Kwa-Zulu Natal - Natal Sharks Board</option>
+<option value="317">Kwazulu Natal - Office of the Premier</option>
+<option value="318">Kwazulu Natal - Provincial Legislature</option>
+<option value="319">Kwazulu Natal - Provincial Treasury</option>
+<option value="320">Kwazulu Natal - Public Works (Head Office)</option>
+<option value="321">Kwazulu Natal - Social Development</option>
+<option value="322">Kwazulu Natal - Sport and Recreation</option>
+<option value="323">Kwa-Zulu Natal - Trade and Investment KwaZulu-Natal</option>
+<option value="324">Kwazulu Natal - Transport</option>
+<option value="864">KwaZulu Natal Economic Regulatory Authority</option>
+<option value="753">KwaZulu Natal-Community Education and Training College</option>
+<option value="865">KwaZulu-Natal - Tourism And Film Authority</option>
+<option value="325">KwaZulu-Natal Film Commission</option>
+<option value="326">KWAZULU-NATAL FILM INDUSTRY</option>
+<option value="327">KwaZulu-Natal Growth Fund Trust</option>
+<option value="328">KwaZulu-Natal Liquor Authority</option>
+<option value="329">KwaZulu-Natal Museum</option>
+<option value="330">KwaZulu-Natal Tourism Authority</option>
+<option value="331">KZN Growth Fund Trust</option>
+<option value="332">Labour</option>
+<option value="333">Laingsburg Municipality</option>
+<option value="334">Land and Agricultural Development Bank of South Africa</option>
+<option value="335">Langeberg Municipality</option>
+<option value="336">Legal Aid South Africa</option>
+<option value="851">Lejweleputswa Development Agency</option>
+<option value="337">Lejweleputswa District Municipality</option>
+<option value="338">Lekwa Local Municipality</option>
+<option value="339">Lepelle Northern Water</option>
+<option value="340">Lepelle-Nkumpi Municipality</option>
+<option value="341">Lephalale Local Municipality</option>
+<option value="342">Lesedi Local Municipality</option>
+<option value="343">Letsemeng Local Municipality</option>
+<option value="344">Lim345 Local Municipality</option>
+<option value="345">Limpopo - Agriculture</option>
+<option value="815">Limpopo - Co-operative Governance, Human Settlements and Traditional Affairs </option>
+<option value="787">Limpopo - Department of Community Safety and Transport Management</option>
+<option value="361">Limpopo - Economic Development Agency</option>
+<option value="346">Limpopo - Economic Development Environment &amp; Tourism</option>
+<option value="347">Limpopo - Education</option>
+<option value="348">Limpopo - Gateway Airport Authority Limited</option>
+<option value="349">Limpopo - Health</option>
+<option value="867">Limpopo - Legislature </option>
+<option value="350">Limpopo - Limpopo Development Corporation</option>
+<option value="351">Limpopo - Limpopo Gambling Board</option>
+<option value="352">Limpopo - Limpopo Roads Agency</option>
+<option value="353">Limpopo - Limpopo Tourism Agency</option>
+<option value="354">Limpopo - Local Government and Housing</option>
+<option value="355">Limpopo - Office of the Premier</option>
+<option value="356">Limpopo - Provincial Treasury</option>
+<option value="357">Limpopo - Public Works</option>
+<option value="358">Limpopo - Roads and Transport</option>
+<option value="359">Limpopo - Social Development</option>
+<option value="360">Limpopo - Sport Arts and culture</option>
+<option value="362">Local Government Education and Training Authority</option>
+<option value="759">Luthuli museum</option>
+<option value="363">Madibeng Local Municipality</option>
+<option value="364">Mafube Local Municipality</option>
+<option value="365">Magalies Water</option>
+<option value="766">Magareng Local Municipality</option>
+<option value="366">Mahikeng Local Municipality</option>
+<option value="367">Majuba Tvet college</option>
+<option value="368">Makana Local Municipality</option>
+<option value="369">Makhado Local Municipality</option>
+<option value="370">Makhuduthamaga Local Municipality</option>
+<option value="833">Maluti Tvet College</option>
+<option value="371">Maluti-a-Phofung Local Municipality</option>
+<option value="373">Maluti-a-Phofung Water</option>
+<option value="374">Mamusa Local Municipality</option>
+<option value="375">Mandela Bay Development Agency</option>
+<option value="812">Mandela Bay Theatre Complex</option>
+<option value="376">Mandeni Local Municipality</option>
+<option value="377">Mangaung Metropolitan Municipality</option>
+<option value="378">Mango Airlines Soc Ltd</option>
+<option value="379">Mantsopa Local Municipality</option>
+<option value="752">Manufacturing, Engineering and Related Services SETA (merSETA)</option>
+<option value="380">Maphumulo Local Municipality</option>
+<option value="381">Maquassi hill Local Municipality</option>
+<option value="804">Marine Living Resources Fund</option>
+<option value="382">Market Theatre Foundation</option>
+<option value="383">Maruleng Municipality</option>
+<option value="384">Masilonyana local municipality</option>
+<option value="385">Matatiele Local Municipality</option>
+<option value="386">Matjhabeng Local Municipality</option>
+<option value="387">Matlosana Local Municipality</option>
+<option value="388">Matzikama Municipality</option>
+<option value="389">Mbhashe Local Municipality</option>
+<option value="871">Mbizana Municipality</option>
+<option value="391">Mbombela Local Municipality</option>
+<option value="818">Mcgregor Museum (Kimberly)</option>
+<option value="775">Media Development and Diversity Agency</option>
+<option value="392">Media, Information and Communication Technologies Sector Education and training Authority (MICT SETA)</option>
+<option value="393">Medical Research Council of South Africa</option>
+<option value="394">Merafong Local Municipality</option>
+<option value="395">Metsimaholo Local Municipality</option>
+<option value="396">Mhlathuze Water</option>
+<option value="397">Mhlontlo Local Municipality</option>
+<option value="398">Midvaal Local Municipality</option>
+<option value="399">Military Veterans</option>
+<option value="400">Mine Health and Safety Council</option>
+<option value="402">Mining Qualifications Authority</option>
+<option value="403">MINTEK</option>
+<option value="404">MKHAMBATHINI LOCAL MUNICIPALITY</option>
+<option value="405">Mkhondo Local Municipality</option>
+<option value="407">Mnquma Local Municipality</option>
+<option value="408">Modimolle-Mookgophong Local Municipality</option>
+<option value="409">Mogalakwena Local Municipality</option>
+<option value="410">Mogale City Local Municipality</option>
+<option value="411">Mohokare Local Municipality</option>
+<option value="412">Molemole Municipality</option>
+<option value="413">Mopani District Municipality</option>
+<option value="414">Moqhaka Local Municipality</option>
+<option value="415">Moretele Local Municipality</option>
+<option value="416">Moses Kotane Institute</option>
+<option value="417">Moses Kotane Local Municipality</option>
+<option value="418">Mossel Bay Municipality</option>
+<option value="829">Motheo TVET College</option>
+<option value="419">Mpofana Local Municipality</option>
+<option value="420">Mpumalanga - Agriculture Rural Development and Land Administration</option>
+<option value="828">Mpumalanga - Community Education and Training</option>
+<option value="421">Mpumalanga - Community Safety Security and Liaison</option>
+<option value="422">Mpumalanga - Cooperative Governance and Traditional Affairs</option>
+<option value="875">Mpumalanga - Co-operative Governance, Human Settlements, and Traditional Affairs</option>
+<option value="423">Mpumalanga - Culture Sport and Recreation</option>
+<option value="424">Mpumalanga - Economic Development Environment and Tourism</option>
+<option value="856">Mpumalanga - Economic Regulator</option>
+<option value="425">Mpumalanga - Education</option>
+<option value="426">Mpumalanga - Finance</option>
+<option value="427">Mpumalanga - Health</option>
+<option value="428">Mpumalanga - Human Settlements</option>
+<option value="429">Mpumalanga - Mpumalanga Economic Growth Agency (MEGA)</option>
+<option value="430">Mpumalanga - Mpumalanga Regional Training Trust (MRTT)</option>
+<option value="431">Mpumalanga - Mpumalanga Tourism and Parks Agency (MTPA)</option>
+<option value="432">Mpumalanga - Office of the Premier</option>
+<option value="741">Mpumalanga - Provincial Treasury</option>
+<option value="433">Mpumalanga - Public Works Roads and Transport</option>
+<option value="434">Mpumalanga Social Development</option>
+<option value="435">Mpupalanga - Mpumalanga Economic Growth Agency</option>
+<option value="436">Msinga Local Municipality</option>
+<option value="406">Msinsi Holding (SOC)</option>
+<option value="757">Msukaligwa Local Municipality</option>
+<option value="437">Msunduzi Local Municipality</option>
+<option value="438">Msunduzi Museum</option>
+<option value="844">Mthashana TVET</option>
+<option value="439">Mtubatuba Local Municipality</option>
+<option value="440">Municipal Demarcation Board</option>
+<option value="441">Municipal Infrastructure Investment Unit</option>
+<option value="442">Municipal Infrastructure Support Agent</option>
+<option value="443">Musina Local Municipality</option>
+<option value="826">Nala Local Municipality</option>
+<option value="848">Naledi - NW Local Municipality </option>
+<option value="444">Nama Khoi Local Municipality</option>
+<option value="445">NamaKwa District Municipality</option>
+<option value="874">National - Department of Agriculture</option>
+<option value="879">National - Department of Electricity and Energy</option>
+<option value="796">National - Employment and Labour</option>
+<option value="180">National - Environment, Forestry and Fisheries</option>
+<option value="401">National - Mineral Resources and Energy</option>
+<option value="446">National Agricultural Marketing Council</option>
+<option value="447">National Arts Council of South Africa</option>
+<option value="863">National Bargaining Council Road Freight and Logistics Industry</option>
+<option value="448">National Consumer Commission</option>
+<option value="449">National Consumer Tribunal</option>
+<option value="450">National Credit Regulator</option>
+<option value="451">National Development Agency</option>
+<option value="452">National Economic Development and Labour Council</option>
+<option value="453">National Electronic Media Institute of South Africa</option>
+<option value="454">National Empowerment Fund</option>
+<option value="455">National Energy Regulator of South Africa</option>
+<option value="456">National Film and Video Foundation of South Africa</option>
+<option value="457">National Gambling Board of South Africa</option>
+<option value="458">National Health Laboratory Service</option>
+<option value="459">National Heritage Council of South Africa</option>
+<option value="460">National Home Builders Registration Council</option>
+<option value="461">National Housing Finance Corporation Limited</option>
+<option value="462">NATIONAL INSTITUTE FOR THE HUMANITIES AND SOCIAL SCIENCES (NIHSS)</option>
+<option value="463">National Library of South Africa</option>
+<option value="464">National Lotteries Commission</option>
+<option value="465">NATIONAL METROLOGY INSTITUTE OF SOUTH AFRICA</option>
+<option value="785">National Museum Bloemfontein</option>
+<option value="466">National Nuclear Regulator</option>
+<option value="467">National Prosecuting Authority (NPA)</option>
+<option value="468">National Radioactive Waste Disposal Institute (NRWDI)</option>
+<option value="469">National Regulator for Compulsory Specifications</option>
+<option value="470">National Research Foundation</option>
+<option value="471">National School of Government</option>
+<option value="582">National Science and Innovation</option>
+<option value="782">National Skills Fund (NSF)</option>
+<option value="472">National Student Financial Aid Scheme</option>
+<option value="473">National Treasury</option>
+<option value="474">National Urban Reconstruction and Housing Agency</option>
+<option value="475">National Youth Development Agency</option>
+<option value="476">Ncome Museum</option>
+<option value="477">Ndlambe Local Municipality</option>
+<option value="478">Ndwedwe Local Municipality</option>
+<option value="479">Nelson Mandela Bay Municipality</option>
+<option value="480">Nelson Mandela National Museum</option>
+<option value="481">Newcastle Local Municipality</option>
+<option value="482">Ngaka Modiri Molema District Municipality</option>
+<option value="845">Ngwathe Local Municipality</option>
+<option value="483">Nkandla Local Municipality</option>
+<option value="484">Nkangala District Municipality</option>
+<option value="850">Nkangala TVET College</option>
+<option value="485">Nketoana Local Municipality</option>
+<option value="486">Nkomazi Local Municipality</option>
+<option value="487">Nongoma Local Municipality</option>
+<option value="809">North West - Department of Agriculture and Rural Development</option>
+<option value="791">North West - Department of Arts, Culture, Sports and Recreation </option>
+<option value="488">North West - Department of Community Safety and Transport Management</option>
+<option value="837">North West - Department of Cooperative Governance and Traditional Affairs (GoGTA) </option>
+<option value="489">North West - Department of Economic Development, Environment, Conservation and Tourism</option>
+<option value="490">North West - Department of Education</option>
+<option value="810">North West - Department of Employment and Labour</option>
+<option value="491">North West - Department of Finance</option>
+<option value="492">North West - Department of Health</option>
+<option value="494">North West - Department of Public Works and Roads</option>
+<option value="495">North West - Department of Social Development</option>
+<option value="496">North West - Department of Tourism</option>
+<option value="493">North West - Human Settlements</option>
+<option value="869">North West - Legislature</option>
+<option value="811">North West - Mmabana Arts, Culture and Sport Foundation</option>
+<option value="805">North West - North West Community Education and Training College</option>
+<option value="497">North West - North West Development Corporation (Pty) ltd</option>
+<option value="498">North West - North West Gambling Board</option>
+<option value="499">North West - North West Housing Corporation</option>
+<option value="500">North West - North West Parks and Tourism Board</option>
+<option value="501">North West - North West Transport Investment (Pty) ltd</option>
+<option value="502">North West - Office of the Premier</option>
+<option value="742">North West - Provincial Treasury</option>
+<option value="503">NORTH WEST UNIVERSITY</option>
+<option value="504">Northern Cape - Agriculture and Land Reform</option>
+<option value="816">Northern Cape - Community Education and Training College</option>
+<option value="505">Northern Cape - Cooperative Governance Human Settlement and Traditional Affairs</option>
+<option value="506">Northern Cape - Economic Development and Tourism</option>
+<option value="776">Northern Cape - Economic Development, Trade and Investment Promotion Agency</option>
+<option value="507">Northern Cape - Education</option>
+<option value="508">Northern Cape - Environmental Affairs and Nature Conservation</option>
+<option value="509">Northern Cape - Finance</option>
+<option value="510">Northern Cape - Health</option>
+<option value="511">Northern Cape - Office of the Premier</option>
+<option value="784">Northern Cape - Provincial Treasury</option>
+<option value="512">Northern Cape - Roads and Public works</option>
+<option value="513">Northern Cape - Social Development</option>
+<option value="514">Northern Cape - Sport Arts and Culture</option>
+<option value="792">Northern Cape - Tourism Authority</option>
+<option value="515">Northern Cape - Transport Safety and Liaison</option>
+<option value="750">Northlink TVET College</option>
+<option value="516">Nquthu Local Municipality</option>
+<option value="517">Ntabankulu Local Municipality</option>
+<option value="786">Ntinga O.R Tambo Development Agengy</option>
+<option value="519">Nyandeni Local Municipality</option>
+<option value="520">Office of Health Standards Compliance (OHSC)</option>
+<option value="521">Office of the Chief Justice</option>
+<option value="522">Office of the Ombud for Financial Service Providers</option>
+<option value="523">Office of the Pension Funds Adjudicator</option>
+<option value="771">Office Of The Valuer-General</option>
+<option value="524">Okhahlamba Local Municipality</option>
+<option value="843">Ombud Council</option>
+<option value="525">Onderstepoort Biological Products Limited</option>
+<option value="526">OR Tambo District Municipality</option>
+<option value="527">ORBIT TVET COLLEGE</option>
+<option value="528">Oudtshoorn Municipality</option>
+<option value="529">Overberg District Municipality</option>
+<option value="530">Overberg Water</option>
+<option value="531">Overstrand Municipality</option>
+<option value="532">PAN SOUTH AFRICAN LANGUAGE BOARD (PANSALB)</option>
+<option value="533">Parliament of the Republic of South Africa</option>
+<option value="534">Passenger Rail Agency of South Africa</option>
+<option value="535">Pelladrift Water Board</option>
+<option value="536">Performing Arts Council of the Free State</option>
+<option value="537">Perishable Products Export Control Board</option>
+<option value="538">Petroleum Agency SA</option>
+<option value="539">PetroSA</option>
+<option value="540">Phokwane Local Municipality</option>
+<option value="541">Phumelela Local Municipality</option>
+<option value="542">Pick it up</option>
+<option value="543">Pixley Ka Seme District Municipality</option>
+<option value="544">Polokwane Municipality</option>
+<option value="760">Port Elizabeth TVET College</option>
+<option value="545">Port St Johns Local Municipality</option>
+<option value="546">Ports Regulator of South Africa</option>
+<option value="798">Postbank SOC</option>
+<option value="800">Prince Albert Municipality</option>
+<option value="547">Private Security Industry Regulatory Authority</option>
+<option value="548">Productivity SA</option>
+<option value="549">Public Enterprises</option>
+<option value="550">Public Investment Corporation Limited</option>
+<option value="551">Public Protector South Africa</option>
+<option value="552">Public Service &amp; Administration</option>
+<option value="553">Public Service Commission</option>
+<option value="554">Public Service Sector Education and Training Authority</option>
+<option value="555">Public Works</option>
+<option value="748">Purchasing Consortium Southern Africa (PURCOSA)</option>
+<option value="556">Quality Council for Trades and Occupations</option>
+<option value="557">Railway Safety Regulator</option>
+<option value="558">RAMOTSHERE MOILOA LOCAL MUNICIPALITY</option>
+<option value="559">Rand Water</option>
+<option value="560">Rand West Local Municipality</option>
+<option value="561">Ratlou Local Municipality</option>
+<option value="562">Ray Nkonyeni Local Municipality</option>
+<option value="563">Renosterburg Local Municipality</option>
+<option value="847">Richmond - KZ Local Municipality</option>
+<option value="564">Richtersveld Municipality</option>
+<option value="749">Rights of Cultural, Religious &amp; Linguistic Communities</option>
+<option value="565">Road Accident Fund</option>
+<option value="566">Road Traffic Infringement Agency</option>
+<option value="567">Road Traffic Management Corporation</option>
+<option value="568">Robben Island Museum</option>
+<option value="569">Rural Development &amp; Land Reform</option>
+<option value="570">Rural Housing Loan Fund</option>
+<option value="571">Rustenburg Local Municipality</option>
+<option value="572">SA Bureau of Standards</option>
+<option value="573">SA Police Service</option>
+<option value="574">SA Revenue Service</option>
+<option value="575">Safety and Security Education and Training Authority</option>
+<option value="754">Safety and Security Sector Education and Training Authority (Sasseta)</option>
+<option value="576">Sakhisizwe Local Municipality</option>
+<option value="577">SALDANHA BAY INDUSTRIAL DEVELOPMENT ZONE</option>
+<option value="578">SALDANHA BAY MUNICIPALITY</option>
+<option value="579">Sarah Baartman District Municipality</option>
+<option value="580">SASRIA</option>
+<option value="581">Sasria Limited</option>
+<option value="583">Sedibeng District Municipality</option>
+<option value="834">Sedibeng TVET College</option>
+<option value="584">Sedibeng Water</option>
+<option value="846">Sefako Makgatho Health Sciences University</option>
+<option value="585">Sekhukhune District Municipality</option>
+<option value="586">Senqu Local Municipality</option>
+<option value="587">Sentech Limited</option>
+<option value="588">Services Sector Education and Training Authority</option>
+<option value="802">Setsoto - FS Local Municipality </option>
+<option value="589">Siyancuma Local Municipality</option>
+<option value="590">Siyathemba Local Municipality</option>
+<option value="591">SKA SA &#xE2;&#x20AC;&#x201C; Square Kilometre Array</option>
+<option value="592">Small Business Development</option>
+<option value="593">Small Enterprise Development Agency</option>
+<option value="861">Small Enterprise Development and Finance Agency </option>
+<option value="594">Small Enterprise Finance Agency</option>
+<option value="595">Social Development</option>
+<option value="596">Social Housing Regulatory Authority</option>
+<option value="597">Solplaatje Local Municipality</option>
+<option value="598">South African Airways (Pty) Limited</option>
+<option value="599">South African Astronomical Observatory (NRF)</option>
+<option value="600">South African Broadcasting Corporation Limited</option>
+<option value="601">South African Civil Aviation Authority</option>
+<option value="602">South African Council for Educators</option>
+<option value="783">South African Council for Natural Scientific Professions</option>
+<option value="603">South African Diamond and Precious Metals Regulator</option>
+<option value="604">South African Environmental Observation Network (SAEON)</option>
+<option value="605">South African Express (Pty) Limited</option>
+<option value="606">South African Forestry Company Limited</option>
+<option value="607">SOUTH AFRICAN HEALTH PRODUCTS REGULATORY AUTHORITY</option>
+<option value="608">South African Heritage Resources Agency</option>
+<option value="609">South African Human Rights Commission</option>
+<option value="610">South African Library for the Blind</option>
+<option value="611">South African Local Government Association</option>
+<option value="612">South African Maritime Safety Authority</option>
+<option value="613">South African National Accreditation System</option>
+<option value="614">South African National Aids Trust (SANAC Trust)</option>
+<option value="615">South African National Biodiversity Institute</option>
+<option value="616">South African National Energy Development Institute</option>
+<option value="617">South African National Parks</option>
+<option value="618">South African National Roads Agency Soc Limited (SANRAL)</option>
+<option value="619">South African National Space Agency</option>
+<option value="620">South African Nuclear Energy Corporation Limited</option>
+<option value="621">South African Police Service</option>
+<option value="622">South African Post Office Limited</option>
+<option value="623">South African Qualifications Authority</option>
+<option value="624">South African Revenue Service</option>
+<option value="625">South African Social Security Agency</option>
+<option value="626">SOUTH AFRICAN SPECIAL RISKS INSURANCE ASSOCIATION (Sasria Soc Ltd)</option>
+<option value="627">South African Tourism</option>
+<option value="628">South African Weather Service</option>
+<option value="813">South Cape TVET College</option>
+<option value="629">Special Investigation Unit</option>
+<option value="630">Sport &amp; Recreation South Africa</option>
+<option value="631">State Diamond Trader</option>
+<option value="632">State Information Technology Agency</option>
+<option value="633">State Security Agency</option>
+<option value="634">Statistics South Africa</option>
+<option value="635">Stellenbosch Municipality</option>
+<option value="636">Steve Tshwete Local Municipality</option>
+<option value="637">Strategic Fuel Fund</option>
+<option value="638">Sundays River Valley Municipality</option>
+<option value="639">Swartland Municipality</option>
+<option value="640">Swellendam Municipality</option>
+<option value="832">Takeover Regulation Panel</option>
+<option value="641">Taletso TVET College</option>
+<option value="642">Technology Innovation Agency</option>
+<option value="643">Telecommunications and Postal Services</option>
+<option value="644">Thaba Chweu Local Municipality</option>
+<option value="645">Thabazimbi Local Municipality</option>
+<option value="831">Thabo Mofutsanyana District Municipality</option>
+<option value="646">The Co-operatives Banks Development Agency</option>
+<option value="647">The Department of Planning, Monitoring and Evaluation</option>
+<option value="762">The Innovation Hub Management Centre</option>
+<option value="779">The Limpopo Community Education and Training College</option>
+<option value="648">THE MVULA TRUST</option>
+<option value="649">The National English Literary Museum</option>
+<option value="650">The Playhouse Company</option>
+<option value="651">The Presidency</option>
+<option value="652">The Richards Bay Industrial Development Zone</option>
+<option value="653">The Social Housing Regulatory Authority</option>
+<option value="654">The South African Bureau of Standards (SABS)</option>
+<option value="839">The South African Council for Project and Construction Management Professions</option>
+<option value="820">The South African Institute for Drug-Free Sport</option>
+<option value="655">The South African National Roads Agency Limited</option>
+<option value="656">The South African Qualifications Authority (SAQA)</option>
+<option value="657">The South African State Theatre</option>
+<option value="658">Theewaterkloof Municipality</option>
+<option value="854">Thekwini TVET College</option>
+<option value="659">Thembelihle Local Municipality</option>
+<option value="660">Thembisile Hani Local Municipality</option>
+<option value="661">Thulamela Local Municipality</option>
+<option value="662">Tokologo Local Municipality</option>
+<option value="663">Tourism</option>
+<option value="664">Trade &amp; Industry</option>
+<option value="665">Trans-Caledon Tunnel Authority</option>
+<option value="666">Transnet National Ports Authority</option>
+<option value="667">Transnet SOC Ltd</option>
+<option value="668">Transport</option>
+<option value="669">Transport Education and Training Authority</option>
+<option value="670">Tsantsabane Local Municipality</option>
+<option value="671">TSHWANE AUTOMOTIVE SPECIAL ECONOMIC ZONE</option>
+<option value="672">TSHWANE ECONOMIC DEVELOPMENT AGENCY</option>
+<option value="673">Tshwane north tvet college</option>
+<option value="674">Tswaing Local Municipality</option>
+<option value="675">Tswelopele Local Municipality</option>
+<option value="743">Tygerberg Hospital</option>
+<option value="677">UBUNTU LOCAL MUNICIPALITY</option>
+<option value="678">Ugu Disctrict Munucipality</option>
+<option value="679">Ulundi Local Municipality</option>
+<option value="680">uMalusi Council for Quality Assurance in General and Further Education and Training</option>
+<option value="681">Umdoni Local Municipality</option>
+<option value="682">uMfolozi Local Municipality</option>
+<option value="683">Umgeni Water</option>
+<option value="684">uMgungundlovu District Municipality</option>
+<option value="838">Umgungundlovu Economic Development Agency SOC</option>
+<option value="685">Umhlabuyalingana Local Municipality</option>
+<option value="686">uMhlathuze Municipality</option>
+<option value="687">Umkhanyakude District Municipality</option>
+<option value="688">uMlalazi Municipality</option>
+<option value="689">Umngeni Municipality</option>
+<option value="690">uMshwathi local Municipality</option>
+<option value="691">Umsobomvu Local Municipality</option>
+<option value="692">uMsunduzi Museum</option>
+<option value="693">Umuziwabantu Local Municipality</option>
+<option value="694">Umvoti Local Municipality</option>
+<option value="695">Umzimkhulu Local Municipality</option>
+<option value="696">Umzimvubu Local Municipality</option>
+<option value="697">Umzinyathi District Municipality</option>
+<option value="698">Umzumbe Local Municipality</option>
+<option value="699">Unemployment Insurance Fund</option>
+<option value="700">Universal Service and Access Agency of South Africa</option>
+<option value="701">Universal Service and Access Fund</option>
+<option value="702">University of Mpumalanga</option>
+<option value="703">UNIVERSITY OF SOUTH AFRICA (UNISA)</option>
+<option value="825">University of the Free State</option>
+<option value="704">Uphongolo Local Municipality</option>
+<option value="853">uShaka Marine World</option>
+<option value="705">uThukela District Municipality</option>
+<option value="706">uThukela Water (Pty) Ltd</option>
+<option value="707">uThungulu District Municipality</option>
+<option value="30">Vaal Central Water</option>
+<option value="708">Ventersdorp/Tlokwe LM 405 NW</option>
+<option value="709">Vhembe District Municipality</option>
+<option value="710">Victor Khanye Local Municipality</option>
+<option value="767">VUSELELA TVET COLLEGE</option>
+<option value="836">Walter Sisulu Local Municipality</option>
+<option value="711">War Museum of the Boer Republics</option>
+<option value="712">Water and Sanitation</option>
+<option value="713">Water Research Commission</option>
+<option value="714">Waterberg District Municipality</option>
+<option value="746">Waterberg TVET College</option>
+<option value="715">West Coast District Municipality</option>
+<option value="716">West Rand District Municipality</option>
+<option value="717">Western Cape - Agriculture</option>
+<option value="821">Western Cape - Community Education and Training College</option>
+<option value="719">Western Cape - Cultural Affairs and Sport</option>
+<option value="841">Western Cape - Department of Mobility </option>
+<option value="720">Western Cape - Economic Development and Tourism</option>
+<option value="721">Western Cape - Education</option>
+<option value="722">Western Cape - Environmental Affairs and Development</option>
+<option value="814">Western Cape - Gambling and Racing Board</option>
+<option value="723">Western Cape - Health</option>
+<option value="724">Western Cape - Human Settlements</option>
+<option value="878">Western Cape - Infrastructure </option>
+<option value="731">Western Cape - Investments and Trade Promotion Agency</option>
+<option value="725">Western Cape - Local Government</option>
+<option value="758">Western Cape - Nature Conservation Board</option>
+<option value="726">Western Cape - Office of the Premier</option>
+<option value="718">Western Cape - Police Oversight and Community Safety</option>
+<option value="727">Western Cape - Provincial Treasury</option>
+<option value="728">Western Cape - Saldanha Bay Industrial Development Zone</option>
+<option value="729">Western Cape - Social Development</option>
+<option value="730">Western Cape - Transport and Public Works</option>
+<option value="732">Western Cape - Western Cape Liquor Board</option>
+<option value="824">Western Cape Tourism, Trade and Investment Promotion Agency</option>
+<option value="733">WESTERN COLLEGE TVET (WESTCOL)</option>
+<option value="734">Wholesale and Retail Sector Education and Training Authority</option>
+<option value="799">William Humphreys Art Gallery</option>
+<option value="390">Winnie Madikizela-Mandela - EC Local Municipality</option>
+<option value="735">Witzenberg Municipality</option>
+<option value="736">Women</option>
+<option value="737">Xhariep District Municipality</option>
+<option value="738">ZF Mgcawu District Municipality</option>
+<option value="739">Zululand District Municipality</option>
+</select>
+                            <i class="fas fa-caret-down" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Search by Tender Number</h6>
+                        <div class="multi-drp">
+                            <input type="text" id="tenderNumber" class="form-control" placeholder="Enter Tender Number">
+                        </div>
+                    </div>
+
+                </div>
+                <!--Search by MAAA Number Section-->
+                <div class = "row">
+                   <div id="SearchbyMAAAnumberContainer" class="col-md-6">
+                        <h6>Search by MAAA Number"</h6>
+                        <div class="multi-drp"> 
+                            <input type="text" id="maaNumber" class="form-control" placeholder="Enter MAAA Number" oninput="enableSearchButton()">
+                        </div>
+                    </div>
+                      
+                    <div id="searchByCompanyContainer" class="col-md-6">
+                        <h6>Search by Supplier Name</h6>
+                        <div class="multi-drp">
+                            <input type="text" id="bidders" class="form-control" placeholder="Enter Supplier name" oninput="enableSearchButton()">
+                        </div>
+                        <!-- The company list container with scrollable enabled when content overflows
+                        <div id="companyList"
+                             style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; margin-top: 5px; padding: 5px; display: none; background-color: #fff;">
+                        </div>-->
+                    </div>
+                  </div>
+                <div class="row">
+                    <!-- Tender Type Section -->
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col">
+                                <h6>Tender Type</h6>
+                                <ul style="list-style: none; padding-left: 5px;">
+                                    <li>
+                                        <label class="fancy-checkbox">
+                                            <input name="requestType" type="checkbox" value="Request for Bid(Open-Tender)" />
+                                            <span>Request for Bid (Open-Tender)</span>
+                                        </label>
+                                    </li>
+                                    <li>
+                                        <label class="fancy-checkbox">
+                                            <input name="requestType" type="checkbox" value="Request for Bid(Limited-Tender)" />
+                                            <span>Request for Bid (Limited-Tender)</span>
+                                        </label>
+                                    </li>
+                                    <li>
+                                        <label class="fancy-checkbox">
+                                            <input name="requestType" type="checkbox" value="Request for Quotation" />
+                                            <span>Request for Quotation</span>
+                                        </label>
+                                    </li>
+                                    <li>
+                                        <label class="fancy-checkbox">
+                                            <input name="requestType" type="checkbox" value="Request for Information" />
+                                            <span>Request for Information</span>
+                                        </label>
+                                    </li>
+                                    <li>
+                                        <label class="fancy-checkbox">
+                                            <input name="requestType" type="checkbox" value="Request for Proposal" />
+                                            <span>Request for Proposal</span>
+                                        </label>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col">
+                                <h6>&nbsp;</h6>
+                                <ul style="list-style: none; padding-left: 5px;">
+                                    <li>
+                                        <label class="fancy-checkbox">
+                                            <input name="requestType" type="checkbox" value="Expression of Interest" />
+                                            <span>Expression of Interest</span>
+                                        </label>
+                                    </li>
+                                    <li>
+                                        <label class="fancy-checkbox">
+                                            <input name="requestType" type="checkbox" value="SITA Contract" />
+                                            <span>SITA Contract</span>
+                                        </label>
+                                    </li>
+                                    <li>
+                                        <label class="fancy-checkbox">
+                                            <input name="requestType" type="checkbox" value="Transversal Contract" />
+                                            <span>Transversal Contract</span>
+                                        </label>
+                                    </li>
+                                    <li>
+                                        <label class="fancy-checkbox">
+                                            <input name="requestType" type="checkbox" value="Participation" />
+                                            <span>Participation</span>
+                                        </label>
+                                    </li>
+                                    <li>
+                                        <label class="fancy-checkbox">
+                                            <input name="requestType" type="checkbox" value="Deviation" />
+                                            <span>Deviation</span>
+                                        </label>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- eSubmissions Section -->
+                    <div class="col-md-6">
+                        <h6>eSubmissions</h6>
+                        <ul style="list-style: none; padding-left: 5px;">
+                            <li>
+                                <label class="fancy-checkbox">
+                                    <input name="esubmission" type="checkbox" value="true" />
+                                    <span>Accepting eSubmissions</span>
+                                </label>
+                            </li>
+                            <li>
+                                <label class="fancy-checkbox">
+                                    <input name="esubmission" type="checkbox" value="false" />
+                                    <span>Not Accepting eSubmissions</span>
+                                </label>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="filter-buttons">
+                            <button id="btnFilter" type="button" class="btn btn-info"><img src="/images/ApplyFilters.png" disable="true" /></button>
+                            <button id="btnClear" type="button" class="btn btn-light">Reset all filters</button>
+                            <button id="downloadExcelBtn" class="btn btn-success">
+                                <i class="fas fa-file-excel"></i> Download Excel
+                            </button>
+
+                            <button id="downloadPdfBtn" class="btn btn-danger">
+                                <i class="fas fa-file-pdf"></i> Download PDF
+                            </button>
+                          
+
+
+
+
+                           
+                            <button id="btnClearLoader" class="btn btn-info" type="button" disabled>
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Please wait...
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </>
+        </div>
+        <div id="awardedTenders"></div>
+    </div>
+</div>
+
+<table id="tendeList" class="display" cellspacing="0" width="100%">
+    <thead>
+        <tr>
+            <th><i class="fas fa-bullhorn"></i></th>
+            <th colspan="6"><span class="tenderTag">currently advertised</span> tenders</th>
+
+        </tr>
+        <tr>
+            <th></th>
+            <th>Category</th>
+            <th style="max-width: 500px;">Tender Description</th>
+            <th>eSubmission</th>
+            <th>Advertised</th>
+            <th id="closing-column">Closing</th>
+            <th id="bookmark-column"><i class="fas fa-bookmark"></i></th>
+        </tr>
+    </thead>
+    <tfoot>
+        <tr><th colspan="7"></th></tr>
+    </tfoot>
+</table>
+
+
+
+
+
+
+
+<style>
+    /* Highlight with border */
+    .highlight {
+        border: 3px solid #ffcc00; /* Highlight the border */
+        box-shadow: 0 0 10px rgba(255, 204, 0, 0.7); /* Add a glowing effect */
+        transition: border 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for border and shadow */
+    }
+
+    /* Title Highlight */
+    .modal-header.highlight {
+        background-color: #ffcc00; /* Yellow background */
+        color: #000; /* Text color for contrast */
+        border-radius: 0.25rem; /* Rounded corners */
+        font-weight: bold; /* Bold text */
+        padding: 10px; /* Padding for emphasis */
+        transition: background-color 0.3s ease; /* Smooth transition */
+        display: flex; /* Use flexbox for alignment */
+        align-items: center; /* Align items vertically */
+    }
+
+    .modal-header .icon {
+        margin-right: 0; /* Remove space between icon and text */
+        color: #FFFFFF; /* Icon color */
+        font-size: 1.0rem; /* Adjust the icon size if needed */
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: flex-start; /* Align items to the start instead of space-between */
+        align-items: center; /* Center items vertically */
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center; /* Align icon and title vertically */
+    }
+
+    .icon {
+        margin-right: 20px; /* Increase space between icon and title */
+        font-size: 1.1rem; /* Adjust icon size as needed */
+    }
+
+    .modal-title {
+        margin-bottom: 0;
+        margin-left: 10px; /* Add space between the title and any other content, if needed */
+        font-size: 1.5rem; /* Adjust as needed */
+    }
+
+                    
+
+
+</style>
+
+
+                <div class="modal fade" id="educationalPopup" tabindex="-1" role="dialog" aria-labelledby="educationalPopupLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <!-- Modal Header -->
+                            <div class="modal-header highlight">
+                                <i class="fas fa-lightbulb icon"></i>
+                                <h5 class="modal-title" id="educationalPopupLabel" style="font-weight: bold;">New Feature Alert</h5>
+                            </div>
+
+                            <!-- Modal Body -->
+                            <div class="modal-body">
+                                <!-- Message 1 -->
+                                <div class="message" id="message1" style="font-size: 1.2em; margin-bottom: 15px;">
+                                    We're excited to announce that the bookmark feature is now fully active! This feature allows you to subscribe, save tenders you're interested in, track their status, and stay updated with any changes in real time.
+                                </div>
+
+                                <!-- Message 2 with detailed features and icons -->
+                                <div class="message" id="message2" style="display:none; font-size: 1.1em;">
+                                    <ul style="list-style-type:none; padding-left: 0;">
+                                        <li style="margin-bottom: 10px;">
+                                            <i class="far fa-bookmark" style="color: #309137; margin-right: 10px; font-size: 1.2em;"></i>
+                                            <strong>Save Tender:</strong> Easily save tenders to your profile.
+                                        </li>
+                                        <li style="margin-bottom: 10px;">
+                                            <i class="far fa-bell" style="color: #309137; margin-right: 10px; font-size: 1.2em;"></i>
+                                            <strong>Notifications:</strong> Stay informed by subscribing to notifications.
+                                            <div style="margin-top: 10px;">Start exploring these features</div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Modal Footer -->
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" id="nextButton">Next</button>
+                <button type="button" class="btn btn-secondary" id="closeButton" data-dismiss="modal" style="display:none;">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+    #companyList {
+        max-height: 200px; /* Limit the height */
+        overflow-y: auto; /* Enable vertical scroll */
+        border: 1px solid #ccc; /* Add a border */
+        margin-top: 5px;
+        display: none; /* Initially hidden */
+    }
+
+        #companyList div {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+            #companyList div:hover {
+                background-color: #f1f1f1;
+            }
+</style>
+
+
+
+  <script>
+    window.onload = function() {
+        // Disable the button when the page loads
+        document.getElementById("btnFilter").disabled = true;
+        document.getElementById("downloadPdfBtn").disabled = true;
+        document.getElementById("downloadExcelBtn").disabled = true;
+    };
+
+    function searchCompany() {
+        let searchText = document.getElementById("bidders").value;
+
+        // Sanitize the input by extracting content inside brackets if present
+        searchText = extractContentInBrackets(searchText);
+        console.log("Sanitized Search Text:", searchText); // Debugging output
+
+        // Only search if the sanitized input is at least 3 characters long
+        if (searchText.length < 3) {
+            clearCompanyList();
+            return;
+        }
+
+        // Fetch data from the backend based on the sanitized search text
+        fetch(`/Home/GetCompanies?search=${encodeURIComponent(searchText)}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log("Data received from backend:", data); // Log to verify the data structure
+
+                if (Array.isArray(data) && data.length > 0) {
+                    displayCompanies(data);
+                } else {
+                    clearCompanyList();
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching company names:", error);
+            });
+    }
+
+    // Function to extract content inside brackets
+    function extractContentInBrackets(input) {
+        // Regular expression to match content inside brackets
+        const match = input.match(/\(([^)]+)\)/);
+
+        // Debugging output to see what was matched
+        console.log("Match result:", match);
+
+        // If content inside brackets is found, return it; otherwise, return the original input
+        return match ? match[1].trim() : input.trim();
+    }
+
+    function displayCompanies(companies) {
+        console.log("Companies to display:", companies); // Additional log to check companies array
+
+        const companyList = document.getElementById("companyList");
+        companyList.innerHTML = ""; // Clear any previous results
+
+        // Make the list visible if results are available
+        companyList.style.display = "block";
+
+        // Iterate over companies and display them
+        companies.forEach(company => {
+            const listItem = document.createElement("div");
+
+            if (company.supplierNumber && company.company) {
+                listItem.textContent = `${company.supplierNumber} - (${company.company})`;
+
+                // Add click event to select the company and populate the input
+                listItem.addEventListener('click', () => {
+                    selectCompany(`${company.supplierNumber} - (${company.company})`);
+                });
+            } else {
+                console.warn("Unexpected data format:", company);
+                listItem.textContent = "Invalid Data";
+            }
+
+            companyList.appendChild(listItem);
+        });
+    }
+
+    function selectCompany(companyText) {
+        const sanitizedCompanyText = extractContentInBrackets(companyText);
+
+        const input = document.getElementById("bidders");
+        input.value = sanitizedCompanyText; // Populate the input field with the sanitized company
+
+        clearCompanyList(); // Hide the dropdown list after selection
+        
+        // enable the button
+        const btnFilter = document.getElementById("btnFilter");
+        btnFilter.disabled = false; // enable the button
+
+        const btnDownloadExcel = document.getElementById("downloadExcelBtn");
+        btnDownloadExcel.disabled = false;
+
+        const btnDownloadPdf =  document.getElementById("downloadPdfBtn");
+        btnDownloadPdf.disabled = false;
+
+    }
+
+    function enableSearchButton() {
+        const btnFilter = document.getElementById("btnFilter");
+        btnFilter.disabled = false; 
+
+        const btnDownloadExcel = document.getElementById("downloadExcelBtn");
+        btnDownloadExcel.disabled = false;
+
+        const btnDownloadPdf =  document.getElementById("downloadPdfBtn");
+        btnDownloadPdf.disabled = false;
+
+    }
+
+    function clearCompanyList() {
+        const companyList = document.getElementById("companyList");
+        companyList.innerHTML = ""; // Clear the list
+        companyList.style.display = "none"; // Hide the container after selection
+
+        // Disable the button
+        const btnFilter = document.getElementById("btnFilter");
+        btnFilter.disabled = true; // Disable the button
+
+        const btnDownloadExcel = document.getElementById("downloadExcelBtn");
+        btnDownloadExcel.disabled = true;
+
+        const btnDownloadPdf =  document.getElementById("downloadPdfBtn");
+        btnDownloadPdf.disabled = true;
+    }
+
+
+  
+</script>
+
+
+<script>
+    $(document).ready(function () {
+        $('#downloadExcelBtn').click(function () {
+            // Show loading spinner
+            $('#loadingSpinner').show();
+
+            // Get the current page number and page length
+            var page = table.page();  
+            var pageLength = table.page.len();  
+
+            // Get the tender number if it's part of a filter (make sure it's defined in your UI)
+            var tenderNumber = $('#tenderNumber').val();
+            var cat = $("#categorieslist").val() + '';
+            var dept = $("#departments").val() + '';
+            var prov = $("#provincelist").val() + '';
+            var cluster = $("#clusterlist").val() + '';          
+            var bidders = $('#bidders').val();
+            var maaNumber =  $('#maaNumber').val();
+
+            // Send an AJAX request to the server with the data for the current page
+            $.ajax({
+                url: '/Home/DownloadOpportunitiesExcel',
+                type: 'GET',
+                data: {
+                    status: 'Awarded',  
+                    tenderNumber: tenderNumber,
+                    bidders: bidders,
+                    maaNumber: maaNumber,
+                    start: page * pageLength,  
+                    length: pageLength  
+                },
+                xhrFields: {
+                    responseType: 'blob' // Important for handling binary data like Excel files
+                },
+                success: function (data, status, xhr) {
+                    // Hide loading spinner
+                    $('#loadingSpinner').hide();
+
+                    // Create a link to download the file
+                    var downloadLink = document.createElement('a');
+                    var url = window.URL.createObjectURL(data);
+
+                    // Extract filename from Content-Disposition header
+                    var contentDisposition = xhr.getResponseHeader('Content-Disposition');
+                    var filename = contentDisposition ? contentDisposition.split('filename=')[1] : 'Tenders.xlsx';
+                    filename = filename.replace(/"/g, ''); // Remove any surrounding quotes
+
+                    // Set up the download link and trigger the download
+                    downloadLink.href = url;
+                    downloadLink.download = filename;
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+
+                    // Revoke the object URL after download to clean up memory
+                    window.URL.revokeObjectURL(url);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    // Hide loading spinner
+                    $('#loadingSpinner').hide();
+
+                    // Log error details for debugging
+                    console.error("Error:", textStatus, errorThrown);
+
+                    // Alert user about the error
+                    alert('Failed to download Excel file.');
+                }
+            });
+        });
+    });
+
+
+</script>
+
+<script>
+    $(document).ready(function () {
+        $('#downloadPdfBtn').click(function () {
+            // Show loading spinner
+            $('#loadingSpinner').show();
+
+            // Get the current page number and page length
+            var page = table.page();  // Current page index (0-based)
+            var pageLength = table.page.len();  // Number of items per page
+
+            // Get the tender number and other filters from the UI
+            var tenderNumber = $('#tenderNumber').val();
+            var categories = $("#categorieslist").val();
+            var departments = $("#departments").val();
+            var provinces = $("#provincelist").val();
+            var clusters = $("#clusterlist").val();
+            var bidders = $('#bidders').val();
+            var maaNumber =  $('#maaNumber').val();
+
+            // Send an AJAX request to the server with the data for the current page
+            $.ajax({
+                url: '/Home/DownloadOpportunitiesPdf',
+                type: 'GET',
+                data: {
+                    status: 'Awarded',  // Modify this based on your filter requirements
+                    tenderNumber: tenderNumber,    // Include tender number filter
+                    categories: categories,        // Include categories filter
+                    departments: departments,      // Include departments filter
+                    provinces: provinces,          // Include provinces filter
+                    clusters: clusters,            // Include clusters filter
+                    bidders: bidders,              // Include bidders filter
+                    maaNumber: maaNumber,
+                    start: page * pageLength,      // Start index based on the current page
+                    length: pageLength             // Number of items per page
+                },
+                xhrFields: {
+                    responseType: 'blob' // Important for handling binary data like PDF files
+                },
+                success: function (data, status, xhr) {
+                    // Hide loading spinner
+                    $('#loadingSpinner').hide();
+
+                    // Create a link to download the file
+                    var downloadLink = document.createElement('a');
+                    var url = window.URL.createObjectURL(data);
+
+                    // Extract filename from Content-Disposition header
+                    var contentDisposition = xhr.getResponseHeader('Content-Disposition');
+                    var filename = contentDisposition ? contentDisposition.split('filename=')[1] : 'Opportunities.pdf';
+                    filename = filename.replace(/"/g, ''); // Remove any surrounding quotes
+
+                    // Set up the download link and trigger the download
+                    downloadLink.href = url;
+                    downloadLink.download = filename;
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+
+                    // Revoke the object URL after download to clean up memory
+                    window.URL.revokeObjectURL(url);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    // Hide loading spinner
+                    $('#loadingSpinner').hide();
+
+                    // Log error details for debugging
+                    console.error("Error:", textStatus, errorThrown);
+
+                    // Alert user about the error
+                    alert('Failed to download PDF file.');
+                }
+            });
+        });
+    });
+</script>
+
+
+
+
+
+
+
+
+
+
+
+<div id="popupDelete" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered justify-content-center" role="document" style="color:#20dd35; font-size:16px; font-weight:700;">
+        <span class="fa fa-spinner fa-spin fa-3x"></span><br />
+        <h6> loading, please wait...</h6>
+    </div>
+</div>
+
+
+
+        </main>
+    </div>
+
+    <footer>
+        <div class="city-bar"> </div>
+        <div class="links">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <ul>
+                                    <li><a href="/Home">Home</a></li>
+                                    <li><a href="/Home/opportunities?id=1">Tenders</a></li>
+                                    <li><a href="/Home/Contact">Get In touch</a></li>
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <ul>
+                                    <li><a href="/Home/About">About E-Tender</a></li>
+                                    <li><a href="/Home/VisionMission">Vision and Mission</a></li>
+                                    <li><a href="/Home/Mandate">Mandate</a></li>
+                                </ul>
+                            </div>
+                            <div class="col-md-5">
+                                <ul>
+                                    <li><a href="http://ocpo.treasury.gov.za/Suppliers_Area/Pages/Scheduled-Bids.aspx" target="_blank">Scheduled Bids</a></li>
+                                    <li><a href="http://ocpo.treasury.gov.za/Suppliers_Area/Pages/Deviations-and-Exspansions.aspx" target="_blank">Deviations and Expansions</a></li>
+                                    <li><a href="http://ocpo.treasury.gov.za" target="_blank">Office of the CPO</a></li>
+                                </ul>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="contact">+ 27(0) 12 406 9222</h4>
+                        <span><img src="/images/footer-locationPin.png" alt="CSD"></span> <span style="color:#D3B721; font-weight:600;font-size:14px; margin-left: 5px;">National Treasury</span>
+                        <br /><span style="margin-left: 30px; margin-top: -8px;">240 Madiba Street, Pretoria</span>
+                    </div>
+                     <div class="col-md-2 csdLogo">
+                        <a href="https://secure.csd.gov.za/" target="_blank"><img src="/images/footer-logoCSD.png"></a>
+                    </div>
+                    <div class="col-md-2">
+                       <a href="http://www.treasury.gov.za/" target="_blank"><img src="/images/footer-logoTreasury.png" alt="Treasury logo"></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    
+    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" crossorigin="anonymous" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="></script>
+<script>(window.jQuery||document.write("\u003Cscript src=\u0022/lib/jquery/dist/jquery.min.js\u0022 crossorigin=\u0022anonymous\u0022 integrity=\u0022sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=\u0022\u003E\u003C/script\u003E"));</script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js" crossorigin="anonymous" integrity="sha384-xrRywqdh3PHs8keKZN+8zzc5TX0GRTLCcmivcbNJWm2rs5C8PRhcEn3czEjhAO9o"></script>
+<script>(window.jQuery && window.jQuery.fn && window.jQuery.fn.modal||document.write("\u003Cscript src=\u0022/lib/bootstrap/dist/js/bootstrap.bundle.min.js\u0022 crossorigin=\u0022anonymous\u0022 integrity=\u0022sha384-xrRywqdh3PHs8keKZN\u002B8zzc5TX0GRTLCcmivcbNJWm2rs5C8PRhcEn3czEjhAO9o\u0022\u003E\u003C/script\u003E"));</script>
+    
+    <script src="/js/site.js?v=DOagYNyVqyBiqVPGcktzpMH3ZYmrb4Fl_TguDjiXCqM"></script>
+
+    
+                    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+                    <script src="/js/datatables.min.js"></script>
+                    <script src="/js/moment.min.js"></script>
+
+                    <script src="/js/chosen/chosen.jquery.js"></script>
+                    <script src="/js/chosen/prism.js"></script>
+                    <script src="/js/chosen/init.js" type="text/javascript" charset="utf-8"></script>
+
+                    <script type="text/javascript">
+                        $('.collapse').on('shown.bs.collapse', function () {
+                            $(this).closest('div.container').prev("button").find("span.glyphicon-plus").removeClass("glyphicon-plus").addClass("glyphicon-minus");
+                        }).on('hidden.bs.collapse', function () {
+                            $(this).closest('div.container').prev("button").find("span.glyphicon-minus").removeClass("glyphicon-minus").addClass("glyphicon-plus");
+                        });
+
+
+                    </script>
+                    <script type="text/javascript">
+                        //window.location.replace(window.location.pathname);
+                        $(document).ready(function () {
+
+
+                    
+
+                            var modal = $('#educationalPopup');
+                            var bookmarkColumn = $('#bookmark-column');
+
+                            // Check if the educational popup has already been shown using localStorage
+                            if (!localStorage.getItem('educationalPopupShown')) {
+                                console.log('No local storage flag found, showing modal.');
+                                modal.modal('show');
+
+                                modal.on('hide.bs.modal', function () {
+                                    console.log('Modal is hidden. Removing highlight.');
+                                    bookmarkColumn.removeClass('highlight-header');
+
+                                    // Set the flag in localStorage so the modal doesn't show again
+                                    localStorage.setItem('educationalPopupShown', 'true');
+                                });
+                            } else {
+                                console.log('Educational popup has already been shown. Not showing modal again.');
+                            }
+
+                            // Handle messages in the modal body
+                            var messages = $('.modal-body .message');
+                            var currentIndex = 0;
+
+                            function showMessage(index) {
+                                messages.each(function (i, message) {
+                                    $(message).toggle(i === index); // Show the current message, hide others
+                                });
+
+                                // Update button visibility and text
+                                $('#nextButton').text(index === messages.length - 1 ? 'Close' : 'Next');
+                                $('#closeButton').toggle(index === messages.length - 1);
+                                $('#nextButton').toggle(index < messages.length - 1);
+                            }
+
+                            // Handle "Next" button click
+                            $('#nextButton').click(function () {
+                                if (currentIndex < messages.length - 1) {
+                                    currentIndex++;
+                                    showMessage(currentIndex);
+                                } else {
+                                    modal.modal('hide'); // Close modal on last message
+                                }
+                            });
+
+                            // Handle "Close" button click
+                            $('#closeButton').click(function () {
+                                modal.modal('hide'); // Close modal
+                            });
+
+                            // Initialize by showing the first message
+                            showMessage(currentIndex);
+                        
+
+                            $("#btnLoader").hide();
+                            $("#btnClearLoader").hide();
+                            $(".filters").hide();
+
+                            var selector = '#btnCancelled';
+                            var status = null;
+                            if (window.location.search.indexOf('filter') > -1) {
+
+                                $(selector).addClass("active");
+                                var filter = new URL(location.href).searchParams.get('filter');
+                                var searchTerm = new URL(location.href).searchParams.get('search').toString().split(',');
+                                loadTendersHome(filter, searchTerm);
+                            }
+                            else {
+                                if (selector) {
+                                    setTimeout(function () {
+                                        $(selector).click();
+                                    }, 1);
+                                    //$(selector).trigger("click");
+                                    $(selector).addClass("active");
+                                }
+                            }
+
+
+                            //$("#btnActive").addClass("active");
+
+                            $("#btnActive").click(function () {
+                                status = 1;
+                                $(".tenderTag").text("currently advertised");
+                                $(".tenderStatus").text("open or active tenders");
+                                $("#closing-column").text("Closing");
+                                setActiveBtn("#btnActive");
+                                loadPaginatedTenders(status);
+                                $(".quickfindbtn").css("visibility", "visible");
+                                $("#searchByCompanyContainer").hide();
+                                $("#downloadExcelBtn").hide();
+                                $("#downloadPdfBtn").hide();  
+                                $("#SearchbyMAAAnumberContainer").hide(); 
+                            });
+                            $("#btnAward").click(function () {
+                                status = 2;
+                                $(".tenderTag").text("Awarded");
+                                $(".tenderStatus").text("awarded tenders");
+                                $("#closing-column").text("Awarded");
+                                setActiveBtn("#btnAward");
+                                //loadTenders(status);
+                                loadPaginatedTenders(status);
+                                $(".quickfindbtn").css("visibility", "hidden");
+                                $("#searchByCompanyContainer").show();
+                                $("#downloadExcelBtn").show();
+                                $("#downloadPdfBtn").show();
+                   -            $("#SearchbyMAAAnumberContainer").show();                              
+                            });
+                            $("#btnClosed").click(function () {
+                                status = 3;
+                                $(".tenderTag").text("Closed");
+                                $(".tenderStatus").text("closed tenders");
+                                $("#closing-column").text("Closed");
+                                setActiveBtn("#btnClosed");
+                                loadPaginatedTenders(status);
+
+                                $(".quickfindbtn").css("visibility", "hidden");
+                                $("#searchByCompanyContainer").hide();
+                                $("#downloadExcelBtn").hide();
+                                $("#downloadPdfBtn").hide();
+              
+
+                           });
+                            $("#btnCancelled").click(function () {
+                                status = 4;
+                                $(".tenderTag").text("Cancelled");
+                                $(".tenderStatus").text("cancelled tenders");
+                                $("#closing-column").text("Cancelled");
+                                setActiveBtn("#btnCancelled");
+                                loadPaginatedTenders(status);
+                                $(".quickfindbtn").css("visibility", "hidden");
+                                $("#searchByCompanyContainer").hide();
+                                $("#downloadExcelBtn").hide();
+                              $("#downloadPdfBtn").hide();
+                            });
+
+                            $("#Search").click(function () {
+                                var status = 'Published';
+                                $.ajax({
+                                    type: "POST",
+                                    url: "/Home/AwardedTenders",
+                                    data: { status: status },
+                                    beforeSend: function () {
+                                        $("#btnLoader").show(); $('.modal').modal('show');
+                                    },
+                                    success: function (response) {
+                                        $("#btnLoader").hide(); $('.modal').modal('hide');
+                                        $("#awardedTenders").html(response);
+                                    },
+                                    error: function (xhr, status, errorThrown) {
+                                        //Here the status code can be retrieved like;
+                                        alert("Error: status = " + xhr.status + " Descripcion =" + xhr.responseText);
+                                    }
+                                })
+                            });
+
+                            $("#Search1").click(function () {
+                                var status = 'Awarded';
+                                $.ajax({
+                                    type: "POST",
+                                    url: "/Home/AwardedTenders",
+                                    data: { status: status },
+                                    beforeSend: function () {
+                                        $('.modal').modal('show');
+                                    },
+                                    success: function (response) {
+                                        $('.modal').modal('hide');
+                                        $("#awardedTenders").html(response);
+                                    },
+                                    error: function (xhr, status, errorThrown) {
+                                        //Here the status code can be retrieved like;
+                                        alert("Error: status = " + xhr.status + " Descripcion =" + xhr.responseText);
+                                    }
+                                })
+                            });
+
+                            $("#show_hide").click(function () {
+                                if ($('#advSearchbtn').hasClass('activeSearch')) {
+                                    $('#advSearchbtn').removeClass('activeSearch');
+                                }
+                                else {
+                                    $('#advSearchbtn').addClass('activeSearch');
+                                }
+
+                                $(".filters").toggle(1500, "easeOutQuint", function () {
+                                });
+                            });
+
+                            /* Trigger Advanced Search */
+                            $("#btnFilter").click(function () {
+                                var cat = $("#categorieslist").val() + '';
+                                var dept = $("#departments").val() + '';
+                                var prov = $("#provincelist").val() + '';
+                                var cluster = $("#clusterlist").val() + '';
+                                var tenderNumber = $("#tenderNumber").val();
+                                var bidders = $('#bidders').val();
+                                var maaNumber =  $('#maaNumber').val();
+                                var types = "";
+                                $('input[name=requestType]:checked').each(function (i, e) {
+                                    types = types + $(this).val() + ',';
+                                });
+                              
+
+                                var esubmission = [];
+                                $("input[name=esubmission]:checked").each(function (i, e) {
+                                    if ($(this).val() == "true") {
+                                        esubmission.push(true);
+                                    }
+
+                                    if ($(this).val() == "false") {
+                                        esubmission.push(false);
+                                    }
+                                });
+
+                              loadTendersFilter(cat, dept, prov, cluster, types, esubmission, status, tenderNumber, bidders, maaNumber);
+                            });
+
+                            $('.btn').on('click', function () {
+                                var $this = $(this);
+                                var loadingText = '<i class="fa fa-spinner fa-spin "></i> Please wait...';
+                                if ($(this).html() !== loadingText) {
+                                    $this.data('original-text', $(this).html());
+                                    $this.html(loadingText);
+                                }
+                                setTimeout(function () {
+                                    $this.html($this.data('original-text'));
+                                }, 2000);
+                            });
+
+                            /* Reset Advanced Filters */
+                            $("#btnClear").click(function () {
+                                $('.categorieslist').val([]).trigger('chosen:updated');
+                                $('.departments').val([]).trigger('chosen:updated');
+                                $('.provincelist').val([]).trigger('chosen:updated');
+                                $('.clusterlist').val([]).trigger('chosen:updated');
+                                $('#tenderNumber').val('')
+                                $('#bidders').val('')
+                                $('input[name="requestType"]').prop('checked', false);
+                                $('input[name="esubmission"]').prop('checked', false);
+
+                                /* Reset Results Table Data */
+                                switch (status) {
+                                    case 2:
+                                        $("#btnAward").click();
+                                        break;
+                                    case 3:
+                                        $("#btnClosed").click();
+                                        break;
+                                    case 4:
+                                        $("#btnCancelled").click();
+                                        break;
+
+                                    default:
+                                        $("#btnActive").click();
+                                }
+                            });
+
+                            // Get the container element
+                            var btnContainer = document.getElementById("myDIV");
+
+                            // Get all buttons with class="btn" inside the container
+                            var btns = btnContainer.getElementsByClassName("btn");
+
+                            // Loop through the buttons and add the active class to the current/clicked button
+                            for (var i = 0; i < btns.length; i++) {
+
+                                btns[i].addEventListener("click", function () {
+                                    var current = document.getElementsByClassName("active");
+                                    current[0].className = current[0].className.replace(" active", "");
+                                    this.className += " active";
+                                });
+                            }
+                        });
+
+                        function setActiveBtn(btnId) {
+                            $('#btnActive').removeClass('active');
+                            $('#btnCancelled').removeClass('active');
+                            $('#btnClosed').removeClass('active');
+                            $('#btnAward').removeClass('active');
+
+                            $(btnId).addClass("active");
+                        }
+
+                        //Pagination for All Tender Tables
+                        function loadPaginatedTenders(status) {
+
+                            $(document).ready(function () {
+                                //$.fn.dataTable.moment('DD/MM/YYYY')
+
+                                if ($.fn.dataTable.isDataTable('#tendeList')) {
+                                    table.destroy();
+                                }
+
+                                table = $('#tendeList').DataTable({
+                                    //dom: 'Blfrtip',
+                                    "serverSide": true,
+                                    "ajax": {
+                                        "url": '/Home/PaginatedTenderOpportunities',
+                                        "contentType": "application/json; charset=utf-8",
+                                        "data": function (d) {
+                                            d.status = status;
+                                        }
+                                    },
+                                    "lengthChange": true,
+                                    "paging": true,
+                                    "pageLength": 10,
+                                    "order": [[2, "desc"]],
+                                    "columns": getCorrectTenderTableColumns(status),
+                                    "columnDefs": [
+                                        { "width": "70%", className: "break-word", "targets": 1 },
+                                        {
+                                            "targets": [2], //Actions column
+                                            "orderable": false, //set not orderable
+
+                                            //"targets": [2], render: $.fn.dataTable.moment('DD/MM/YYYY'),
+                                        },
+                                    ],
+
+                                });
+
+                                tableEvents(table, status);
+                            });
+                        }
+
+                    $(document).ready(function() {
+                        $('.categorieslist').on('change', function() {
+                            toggleFilterButton();
+                        });
+
+                        $('.provincelist').on('change', function() {
+                            toggleFilterButton();
+                        });
+
+                        $('.departments').on('change', function() {
+                            toggleFilterButton();
+                        });
+
+                        function toggleFilterButton() {
+                        if ($('.categorieslist').val().length > 0 || $('.provincelist').val().length > 0 || $('.departments').val().length > 0) {
+                                $('#btnFilter').prop('disabled', false);
+                                $('#downloadExcelBtn').prop('disabled', false);
+                                $('#downloadPdfBtn').prop('disabled', false);
+                            } else {
+                                $('#btnFilter').prop('disabled', true);
+                                $('#downloadExcelBtn').prop('disabled', true);
+                                $('#downloadPdfBtn').prop('disabled', true);
+                            }
+                        }
+
+
+                       const tenderNumberInput = document.getElementById('tenderNumber');
+                       const checkboxes = document.querySelectorAll('input[name="requestType"]');
+                       const esubmissionRadios = document.querySelectorAll('input[name="esubmission"]');
+                       const submitButton = document.getElementById('btnFilter');
+                       const downloadExceButton = document.getElementById('downloadExcelBtn');
+                       const downloadPdfButton = document.getElementById('downloadPdfBtn');
+
+
+                       function toggleButtonState() {
+                          if (tenderNumberInput.value.trim() !== "") {
+                            submitButton.disabled = false;
+                            downloadExceButton.disabled = false;
+                            downloadPdfButton.disabled = false;
+                          } else {
+                            submitButton.disabled = true;
+                            downloadExceButton.disabled = true;
+                            downloadPdfButton.disabled = true;
+                          }
+                       }
+
+                    function toggleSubmitButton() {
+                        // Check if at least one checkbox is checked
+                        const isAnyCheckboxChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+
+                        // Enable the button if at least one checkbox is checked, otherwise disable it
+                        submitButton.disabled = !isAnyCheckboxChecked;
+                        downloadExceButton.disabled = !isAnyCheckboxChecked;
+                        downloadPdfButton.disabled = !isAnyCheckboxChecked;
+                    }
+
+                    function toggleSubmitButton() {
+                        // Check if one of the radio buttons is selected
+                        const isRadioSelected = Array.from(esubmissionRadios).some(radio => radio.checked);
+
+                        // Enable the button if a radio button is selected, otherwise disable it
+                        submitButton.disabled = !isRadioSelected;
+                        downloadExceButton.disabled = !isRadioSelected;
+                        downloadPdfButton.disabled = !isRadioSelected;
+                    }
+
+                        tenderNumberInput.addEventListener('input', toggleButtonState);
+                        checkboxes.forEach(checkbox => {
+                            checkbox.addEventListener('change', toggleSubmitButton);
+                        });
+                       esubmissionRadios.forEach(radio => {
+                            radio.addEventListener('change', toggleSubmitButton);
+                        });
+                    });
+                </script>
+
+                
+</body>
+</html>

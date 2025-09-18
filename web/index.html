@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>eTenders Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<div id="app">
+  <header class="app-header">
+    <div class="left">
+      <img src="/assets/logo.png" alt="Proper Consulting Engineers" class="logo" />
+      <div class="titles">
+        <div class="brand">eTenders Explorer</div>
+        <div class="subtitle">Search South African tender opportunities</div>
+      </div>
+      <button id="updateBtn" class="btn primary big">Update Latest</button>
+      <span id="updateMsg" class="muted" style="margin-left:8px"></span>
+    </div>
+  </header>
+
+  <section class="controls">
+    <div class="search-row">
+      <input id="q" class="input" type="text" placeholder="Search keywords (e.g. AI, data, analytics, security)" />
+      <button id="clearBtn" class="btn ghost" title="Clear search">Clear</button>
+      <button id="searchBtn" class="btn primary">Search</button>
+    </div>
+    <div class="filters-row">
+      <select id="province" class="select"></select>
+      <select id="organ" class="select"></select>
+      <select id="category" class="select"></select>
+      <select id="advRange" class="select" title="Advertised date range">
+        <option value="any">Any time</option>
+        <option value="7d">Last 7 days</option>
+        <option value="30d">Last 30 days</option>
+        <option value="90d">Last 90 days</option>
+        <option value="this_month">This month</option>
+        <option value="last_month">Last month</option>
+        <option value="this_year">This year</option>
+        <option value="last_year">Last year</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="results">
+    <div id="stats" class="muted"></div>
+    <div id="grid" class="grid"></div>
+  </section>
+
+  <footer class="footer">Made with ❤️ for faster tender discovery</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script type="module" src="/main.js"></script>
+</body>
+</html>
