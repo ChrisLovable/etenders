@@ -13,6 +13,7 @@ const advRange = $('advRange');
 
 let rows = [];
 let aiMap = new Map();
+let serverFlags = {};
 
 async function loadCsv(url){
   return new Promise((resolve,reject)=>{
@@ -88,7 +89,9 @@ function render(data){
   stats.textContent = `${data.length} results · ${rows.length} total`;
 
   for(const r of data){
-    const card=document.createElement('div');card.className='card';
+    const card=document.createElement('div');
+    const isCivil = String(r['Category']||'').toLowerCase().includes('civil engineering');
+    card.className = 'card' + (isCivil ? ' civil' : '');
 
     const title=document.createElement('div');title.className='title';
     title.textContent=r['Tender Description'];
@@ -114,6 +117,72 @@ function render(data){
     add('Venue', r['Briefing Venue']);
     add('Where', r['Place where goods, works or services are required']);
     card.appendChild(kv);
+
+    // Flags: Reviewed / Tendered (persist to localStorage keyed by tender number)
+    const flags=document.createElement('div');flags.className='flags';
+    const reviewedId = `rev_${r['Tender Number']}`;
+    const tenderedId = `ten_${r['Tender Number']}`;
+    const reviewed = document.createElement('input'); reviewed.type='checkbox'; reviewed.id=reviewedId;
+    const tendered = document.createElement('input'); tendered.type='checkbox'; tendered.id=tenderedId;
+
+    // Load persisted (server first, fallback to localStorage)
+    const localSaved = JSON.parse(localStorage.getItem('tenderFlags')||'{}');
+    const sv = serverFlags[r['Tender Number']] || {};
+    const initialReviewed = (sv.reviewed !== undefined) ? sv.reviewed : localSaved[reviewedId];
+    const initialTendered = (sv.tendered !== undefined) ? sv.tendered : localSaved[tenderedId];
+    if (initialReviewed) reviewed.checked = true;
+    if (initialTendered) { tendered.checked = true; card.classList.add('tendered'); }
+
+    const saveFlags = ()=>{
+      const obj = JSON.parse(localStorage.getItem('tenderFlags')||'{}');
+      obj[reviewedId] = reviewed.checked;
+      obj[tenderedId] = tendered.checked;
+      localStorage.setItem('tenderFlags', JSON.stringify(obj));
+      // Try to persist to server
+      fetch('/api/flags', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ tenderNumber: r['Tender Number'], reviewed: reviewed.checked, tendered: tendered.checked }) }).catch(()=>{});
+      if (tendered.checked) card.classList.add('tendered'); else card.classList.remove('tendered');
+    };
+    reviewed.addEventListener('change', saveFlags);
+    tendered.addEventListener('change', saveFlags);
+
+    const rLabel=document.createElement('label'); rLabel.htmlFor=reviewedId; rLabel.innerHTML='<span>Reviewed</span>'; rLabel.prepend(reviewed);
+    const tLabel=document.createElement('label'); tLabel.htmlFor=tenderedId; tLabel.innerHTML='<span>Tendered</span>'; tLabel.prepend(tendered);
+    // Add comment button inline with flags
+    const commentBtn = document.createElement('button');
+    commentBtn.className='btn primary sm';
+    commentBtn.textContent='Add comment';
+    flags.appendChild(rLabel); flags.appendChild(tLabel); flags.appendChild(commentBtn);
+    card.appendChild(flags);
+
+    // Add comment section (toggleable)
+    const commentWrap = document.createElement('div');
+    commentWrap.className='comment';
+    const textarea = document.createElement('textarea');
+    textarea.placeholder = 'Write a short note for this tender...';
+    const commentActions = document.createElement('div');
+    commentActions.className='actions';
+    const saveComment = document.createElement('button'); saveComment.className='btn primary'; saveComment.textContent='Save';
+    const cancelComment = document.createElement('button'); cancelComment.className='btn'; cancelComment.textContent='Cancel';
+    commentActions.appendChild(saveComment); commentActions.appendChild(cancelComment);
+    commentWrap.appendChild(textarea); commentWrap.appendChild(commentActions);
+    card.appendChild(commentBtn);
+    card.appendChild(commentWrap);
+
+    // Populate from server/local if exists
+    const existingComment = (serverFlags[r['Tender Number']]||{}).comment || localSaved[`com_${r['Tender Number']}`] || '';
+    if (existingComment) { textarea.value = existingComment; }
+
+    commentBtn.addEventListener('click', ()=>{
+      commentWrap.style.display = commentWrap.style.display==='flex' ? 'none' : 'flex';
+    });
+    cancelComment.addEventListener('click', ()=>{ commentWrap.style.display='none'; });
+    saveComment.addEventListener('click', ()=>{
+      const obj = JSON.parse(localStorage.getItem('tenderFlags')||'{}');
+      obj[`com_${r['Tender Number']}`] = textarea.value;
+      localStorage.setItem('tenderFlags', JSON.stringify(obj));
+      fetch('/api/flags', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ tenderNumber: r['Tender Number'], comment: textarea.value }) }).catch(()=>{});
+      commentWrap.style.display='none';
+    });
 
     grid.appendChild(card);
   }
@@ -207,6 +276,11 @@ if (updateBtn) {
 (async function init(){
   const adv = await loadCsv(advertisedCsvUrl);
   rows = adv;
+  // Load server flags if available
+  try {
+    const res = await fetch('/api/flags');
+    if (res.ok) serverFlags = await res.json();
+  } catch (_) {}
   buildFilters(rows);
   filterRows();
 })();

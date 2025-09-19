@@ -14,7 +14,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;height:100%;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#0b0d10 0%,#0d1218 100%);color:var(--text)}
-.app-header{padding:24px 24px 8px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#0c1118,transparent)}
+.app-header{padding:24px 24px 8px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#0c1118,transparent);color:var(--text)}
 .brand{font-size:22px;font-weight:800;letter-spacing:0.5px}
 .subtitle{color:var(--muted);font-size:13px;margin-top:4px}
 .controls{padding:16px 24px;border-bottom:1px solid var(--border)}
@@ -30,11 +30,22 @@ html,body{margin:0;padding:0;height:100%;font-family:'Inter',system-ui,-apple-sy
 .btn:hover{transform:translateY(-1px);border-color:#2c3644}
 .btn.primary{background:linear-gradient(90deg,var(--accent),#18b1ff);color:#02120e;font-weight:700}
 .btn.big{padding:12px 18px;font-size:14px}
+.btn.sm{padding:4px 8px;font-size:11px}
 .btn.ghost{background:transparent;border-color:#263041}
 .switch{display:flex;gap:6px;align-items:center;color:var(--muted)}
 .results{padding:12px 24px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:12px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;color:var(--text)}
+.card.civil{background:#0a1f44;border-color:#113060}
+.card.civil .title{color:#e6edf3}
+.card.civil .meta{color:#c9d4e5}
+.card.civil .kv{color:#e6edf3}
+.card.tendered{background:#0f6d3d;border-color:#14a164}
+.flags{display:flex;gap:8px;align-items:center;flex-wrap:nowrap}
+.flags label{display:flex;gap:6px;align-items:center;color:#d0d7e1;font-size:12px}
+.comment{margin-top:8px;display:none;flex-direction:column;gap:6px}
+.comment textarea{background:#0e1420;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px;min-height:70px}
+.comment .actions{display:flex;gap:8px}
 .card .title{font-weight:700;line-height:1.2}
 .card .meta{display:flex;flex-wrap:wrap;gap:6px;color:var(--muted);font-size:12px}
 .badge{border:1px solid var(--border);border-radius:999px;padding:4px 8px;background:#0c121a;color:var(--muted)}

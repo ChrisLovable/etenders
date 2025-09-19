@@ -8,6 +8,7 @@ const { stringify } = require('csv-stringify/sync');
 const app = express();
 const PORT = process.env.PORT || 5173;
 
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'web')));
 
 // Serve CSV files from root for convenience
@@ -118,6 +119,46 @@ app.get('/api/update', async (req, res) => {
 	} catch (err) {
 		res.status(500).json({ error: err.message });
 	}
+});
+
+// Tiny backend store for card flags (reviewed/tendered)
+const FLAGS_PATH = path.join(__dirname, 'flags.json');
+
+function loadFlags() {
+	try {
+		const raw = fs.readFileSync(FLAGS_PATH, 'utf8');
+		return JSON.parse(raw);
+	} catch (e) {
+		return {};
+	}
+}
+
+function saveFlags(obj) {
+	try {
+		fs.writeFileSync(FLAGS_PATH, JSON.stringify(obj, null, 2));
+		return true;
+	} catch (e) {
+		return false;
+	}
+}
+
+app.get('/api/flags', (req, res) => {
+	const flags = loadFlags();
+	res.json(flags);
+});
+
+app.post('/api/flags', (req, res) => {
+	const { tenderNumber, reviewed, tendered, comment } = req.body || {};
+	if (!tenderNumber) return res.status(400).json({ error: 'tenderNumber required' });
+	const flags = loadFlags();
+	const prev = flags[tenderNumber] || {};
+	flags[tenderNumber] = {
+		reviewed: reviewed !== undefined ? !!reviewed : !!prev.reviewed,
+		tendered: tendered !== undefined ? !!tendered : !!prev.tendered,
+		comment: comment !== undefined ? String(comment) : (prev.comment || '')
+	};
+	if (!saveFlags(flags)) return res.status(500).json({ error: 'Failed to save' });
+	res.json({ ok: true });
 });
 
 app.listen(PORT, () => {
