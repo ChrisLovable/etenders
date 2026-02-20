@@ -165,14 +165,14 @@ function tokensFromQuery(q){
     .filter(Boolean);
 }
 
-function getTenderFlags(tenderNumber){
-  const localSaved = JSON.parse(localStorage.getItem('tenderFlags')||'{}');
+function getTenderFlags(tenderNumber, localSaved){
+  const saved = localSaved || JSON.parse(localStorage.getItem('tenderFlags')||'{}');
   const sv = serverFlags[tenderNumber] || {};
   return {
-    interested: (sv.interested !== undefined) ? sv.interested : localSaved[`int_${tenderNumber}`],
-    reviewed: (sv.reviewed !== undefined) ? sv.reviewed : localSaved[`rev_${tenderNumber}`],
-    tendered: (sv.tendered !== undefined) ? sv.tendered : localSaved[`ten_${tenderNumber}`],
-    notInterested: (sv.notInterested !== undefined) ? sv.notInterested : localSaved[`nint_${tenderNumber}`]
+    interested: (sv.interested !== undefined) ? sv.interested : saved[`int_${tenderNumber}`],
+    reviewed: (sv.reviewed !== undefined) ? sv.reviewed : saved[`rev_${tenderNumber}`],
+    tendered: (sv.tendered !== undefined) ? sv.tendered : saved[`ten_${tenderNumber}`],
+    notInterested: (sv.notInterested !== undefined) ? sv.notInterested : saved[`nint_${tenderNumber}`]
   };
 }
 
@@ -190,6 +190,7 @@ function filterRows(){
   const showNotInterested = $('showNotInterested')?.checked;
   const showAny = !showAll && (showInterested || showReviewed || showTendered || showNotInterested);
 
+  const localSaved = showAny ? JSON.parse(localStorage.getItem('tenderFlags')||'{}') : null;
   const filtered = rows.filter(r=>{
     if (province && r['Province']!==province) return false;
     if (organ && r['Organ Of State']!==organ) return false;
@@ -197,7 +198,7 @@ function filterRows(){
     if (wantAI && !aiMap.get(r['Tender Number'])) return false;
 
     if (showAny){
-      const f = getTenderFlags(r['Tender Number']);
+      const f = getTenderFlags(r['Tender Number'], localSaved);
       const match = (showInterested && f.interested) || (showReviewed && f.reviewed) || (showTendered && f.tendered) || (showNotInterested && f.notInterested);
       if (!match) return false;
     }
@@ -319,7 +320,6 @@ function render(data){
       if (reviewed.checked) card.classList.add('reviewed'); else card.classList.remove('reviewed');
       if (tendered.checked) card.classList.add('tendered'); else card.classList.remove('tendered');
       if (notInterested.checked) card.classList.add('not-interested'); else card.classList.remove('not-interested');
-      if ($('showAll')?.checked === false) setTimeout(filterRows, 0);
     };
     interested.addEventListener('change', saveFlags);
     reviewed.addEventListener('change', saveFlags);
@@ -477,16 +477,19 @@ const showDropdown = $('showDropdown');
 if (showTrigger && showPanel && showDropdown) {
   showTrigger.addEventListener('click', (e)=>{ e.stopPropagation(); const open = showPanel.getAttribute('aria-hidden')!=='false'; showPanel.setAttribute('aria-hidden', !open); });
   document.addEventListener('click', (e)=>{ if (!showDropdown.contains(e.target)) showPanel.setAttribute('aria-hidden','true'); });
-  const showCbs = [$('showAll'), $('showInterested'), $('showReviewed'), $('showTendered'), $('showNotInterested')];
-  showCbs.forEach(cb=> cb?.addEventListener('change', ()=>{
-    if ($('showAll')?.checked) {
-      $('showInterested').checked = true;
-      $('showReviewed').checked = true;
-      $('showTendered').checked = true;
-      $('showNotInterested').checked = true;
+  let showFilterDebounce;
+  const onShowChange = (e)=>{
+    const showAll = $('showAll');
+    const others = [$('showInterested'), $('showReviewed'), $('showTendered'), $('showNotInterested')];
+    if (e?.target?.id === 'showAll') {
+      if (showAll?.checked) others.forEach(o=> { if(o) o.checked = true; });
+    } else {
+      if (others.some(o=> o?.checked)) showAll.checked = false;
     }
-    filterRows();
-  }));
+    clearTimeout(showFilterDebounce);
+    showFilterDebounce = setTimeout(()=> requestAnimationFrame(filterRows), 50);
+  };
+  [$('showAll'), $('showInterested'), $('showReviewed'), $('showTendered'), $('showNotInterested')].forEach(cb=> cb?.addEventListener('change', onShowChange));
 }
 qInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ filterRows(); }});
 let searchDebounce;
