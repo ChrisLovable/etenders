@@ -190,12 +190,22 @@ function filterRows(){
   const showNotInterested = $('showNotInterested')?.checked;
   const showAny = !showAll && (showInterested || showReviewed || showTendered || showNotInterested);
 
+  const activeFilter = document.querySelector('input[name="activeFilter"]:checked')?.value || 'active';
   const localSaved = showAny ? JSON.parse(localStorage.getItem('tenderFlags')||'{}') : null;
+  const todayStart = startOfDay(new Date());
   const filtered = rows.filter(r=>{
     if (province && r['Province']!==province) return false;
     if (organ && r['Organ Of State']!==organ) return false;
     if (category && r['Category']!==category) return false;
     if (wantAI && !aiMap.get(r['Tender Number'])) return false;
+
+    if (activeFilter === 'active'){
+      const closing = r['Closing'];
+      if (closing) {
+        const closingDate = parseCsvDate(closing);
+        if (closingDate < todayStart) return false;
+      }
+    }
 
     if (showAny){
       const f = getTenderFlags(r['Tender Number'], localSaved);
@@ -470,6 +480,7 @@ provinceSel?.addEventListener('change', filterRows);
 organSel?.addEventListener('change', filterRows);
 categorySel?.addEventListener('change', filterRows);
 if (advRange) advRange.addEventListener('change', filterRows);
+document.querySelectorAll('input[name="activeFilter"]').forEach(r=> r?.addEventListener('change', filterRows));
 // Show dropdown (Interested/Reviewed/Tendered filter)
 const showTrigger = $('showTrigger');
 const showPanel = $('showPanel');

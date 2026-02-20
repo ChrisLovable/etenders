@@ -32,7 +32,13 @@
         <button id="clearCustomCriteriaBtnMain" class="btn primary" title="Clear saved custom criteria">Clear Custom Criteria</button>
         <span id="updateMsg" class="muted" style="align-self:center"></span>
       </div>
-      <input id="q" class="input" type="text" placeholder="Search keywords" />
+      <div class="search-input-row">
+        <input id="q" class="input" type="text" placeholder="Search keywords" />
+        <div class="active-all-radio">
+          <label><input type="radio" name="activeFilter" value="active" checked /> Active</label>
+          <label><input type="radio" name="activeFilter" value="all" /> All</label>
+        </div>
+      </div>
     </div>
     <div class="filters-row">
       <select id="province" class="select"></select>
