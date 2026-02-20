@@ -101,6 +101,16 @@ function render(data){
     meta.appendChild(badge(r['Tender Number']||''));
     meta.appendChild(badge(r['Category']||''));
     if (aiMap.get(r['Tender Number'])) meta.appendChild(badge('AI/Data'));
+    const tenderId = r['Tender ID'];
+    const tenderNumber = r['Tender Number'] || '';
+    const sourceUrl = tenderId ? `/tender/${tenderId}` : (r['Source URL'] && r['Source URL'].startsWith('/') ? r['Source URL'] : (tenderNumber ? `/tender-lookup?tenderNumber=${encodeURIComponent(tenderNumber)}` : 'https://www.etenders.gov.za/Home/opportunities?id=1'));
+    const viewBtn = document.createElement('a');
+    viewBtn.href = sourceUrl;
+    viewBtn.target = '_blank';
+    viewBtn.rel = 'noopener noreferrer';
+    viewBtn.className = 'btn primary sm view-source';
+    viewBtn.textContent = 'View on eTenders';
+    meta.appendChild(viewBtn);
     card.appendChild(meta);
 
     const kv=document.createElement('div');kv.className='kv';

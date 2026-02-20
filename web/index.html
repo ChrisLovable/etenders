@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>eTenders Explorer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,16 +15,18 @@
     <div class="left">
       <img src="/assets/logo.png" alt="Proper Consulting Engineers" class="logo" />
       <div class="titles"></div>
-      <button id="updateBtn" class="btn primary big">Update Latest</button>
-      <span id="updateMsg" class="muted" style="margin-left:8px"></span>
     </div>
   </header>
 
   <section class="controls">
     <div class="search-row">
+      <div class="search-buttons">
+        <button id="updateBtn" class="btn primary big">Update Latest</button>
+        <button id="clearBtn" class="btn primary" title="Clear search">Clear</button>
+        <button id="searchBtn" class="btn primary">Search</button>
+        <span id="updateMsg" class="muted" style="align-self:center"></span>
+      </div>
       <input id="q" class="input" type="text" placeholder="Search keywords (e.g. AI, data, analytics, security)" />
-      <button id="clearBtn" class="btn primary" title="Clear search">Clear</button>
-      <button id="searchBtn" class="btn primary">Search</button>
     </div>
     <div class="filters-row">
       <select id="province" class="select"></select>

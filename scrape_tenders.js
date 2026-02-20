@@ -84,7 +84,12 @@ async function scrapeAllPages(maxPages = 1, status = 4) {
 	return results;
 }
 
+function opportunityIdForStatus(status) {
+	return status === 1 ? 1 : status === 2 ? 2 : status === 3 ? 4 : 3;
+}
+
 async function scrapeViaApi(status = 4) {
+	const oppId = opportunityIdForStatus(status);
 	const baseUrl = 'https://www.etenders.gov.za/Home/PaginatedTenderOpportunities';
 	const headers = {
 		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
@@ -110,11 +115,15 @@ async function scrapeViaApi(status = 4) {
 		console.log(`Fetched ${rows.length} items (start=${start})`);
 		for (const row of rows) {
 			// Normalize whether row is array or object
-			let category = '', description = '', advertised = '', cancelled = '';
+			let category = '', description = '', advertised = '', cancelled = '', tenderNumber = '';
+			let organOfState = '', tenderType = '', province = '', placeWhereRequired = '', specialConditions = '';
+			let contactPerson = '', email = '', telephone = '', fax = '';
+			let briefingSession = '', briefingCompulsory = '', briefingDateTime = '', briefingVenue = '';
+			let eSubmission = '', twoEnvelopeSubmission = '';
+			let tenderId = '', sourceUrl = 'https://www.etenders.gov.za/Home/opportunities?id=1';
 			if (Array.isArray(row)) {
 				// Columns expected:
 				// 0: plus icon, 1: Category, 2: Tender Description, 3: eSubmission, 4: Advertised, 5: Cancelled, 6: icons
-
 				category = stripText(row[1]);
 				description = stripText(row[2]);
 				advertised = stripText(row[4]);
@@ -123,34 +132,35 @@ async function scrapeViaApi(status = 4) {
 				category = stripText(row.category || row.Category || '');
 				description = stripText(row.description || row.TenderDescription || row['Tender Description'] || '');
 				advertised = formatDate(row.advertised || row.Advertised || row.date_Published || '');
-				// Prefer explicit date field to avoid object serialization
 				cancelled = formatDate(row.cancelled_Date || row.cancelled || row.Cancelled || '');
-				var tenderNumber = stripText(row.tender_No || row.tenderNo || row['tender_No'] || row['Tender No'] || '');
-
-				// Extra fields for enriched export (especially for Advertised)
-				var organOfState = stripText(row.organ_of_State || row.organOfState || '');
-				var tenderType = stripText(row.type || '');
-				var province = stripText(row.province || '');
-				var placeWhereRequired = stripText([row.streetname, row.surburb, row.town, row.code].filter(Boolean).join(', '));
-				var specialConditions = stripText(row.conditions || '');
-				var contactPerson = stripText(row.contactPerson || '');
-				var email = stripText(row.email || '');
-				var telephone = stripText(row.telephone || '');
-				var fax = stripText(row.fax || '');
-				var briefingSession = yesNo(row.briefingSession);
-				var briefingCompulsory = yesNo(row.briefingCompulsory || row.compulsory_briefing_session);
-				var briefingDateTime = '';
-				var briefingVenue = stripText(row.briefingVenue || '');
-				var eSubmission = yesNo(row.eSubmission);
-				var twoEnvelopeSubmission = yesNo(row.twoEnvelopeSubmission);
+				tenderNumber = stripText(row.tender_No || row.tenderNo || row['tender_No'] || row['Tender No'] || '');
+				tenderId = row.id ? String(row.id) : '';
+				const baseOppUrl = `https://www.etenders.gov.za/Home/opportunities?id=${oppId}`;
+				sourceUrl = tenderId
+					? `/tender/${tenderId}`
+					: (tenderNumber ? `${baseOppUrl}&search=${encodeURIComponent(tenderNumber)}` : baseOppUrl);
+				organOfState = stripText(row.organ_of_State || row.organOfState || '');
+				tenderType = stripText(row.type || '');
+				province = stripText(row.province || '');
+				placeWhereRequired = stripText([row.streetname, row.surburb, row.town, row.code].filter(Boolean).join(', '));
+				specialConditions = stripText(row.conditions || '');
+				contactPerson = stripText(row.contactPerson || '');
+				email = stripText(row.email || '');
+				telephone = stripText(row.telephone || '');
+				fax = stripText(row.fax || '');
+				briefingSession = yesNo(row.briefingSession);
+				briefingCompulsory = yesNo(row.briefingCompulsory || row.compulsory_briefing_session);
+				briefingVenue = stripText(row.briefingVenue || '');
+				eSubmission = yesNo(row.eSubmission);
+				twoEnvelopeSubmission = yesNo(row.twoEnvelopeSubmission);
 			}
 			if (description) {
-				// closing date is only meaningful for active/closed, cancelled uses cancelled date
 				const closing = formatDate(row && row.closing_Date ? row.closing_Date : '');
 				all.push({ category, tenderNumber, description, advertised, cancelled, closing,
 					organOfState, tenderType, province, placeWhereRequired, specialConditions,
 					contactPerson, email, telephone, fax, briefingSession, briefingCompulsory,
-					briefingDateTime, briefingVenue, eSubmission, twoEnvelopeSubmission });
+					briefingDateTime, briefingVenue, eSubmission, twoEnvelopeSubmission,
+					tenderId, sourceUrl });
 			}
 		}
 		start += rows.length;
@@ -219,14 +229,18 @@ async function writeCsv(records, outPath, status = 4) {
 				{ id: 'briefingDateTime', title: 'Briefing Date and Time' },
 				{ id: 'briefingVenue', title: 'Briefing Venue' },
 				{ id: 'eSubmission', title: 'eSubmission' },
-				{ id: 'twoEnvelopeSubmission', title: 'Two Envelope Submission' }
+				{ id: 'twoEnvelopeSubmission', title: 'Two Envelope Submission' },
+				{ id: 'sourceUrl', title: 'Source URL' },
+				{ id: 'tenderId', title: 'Tender ID' }
 			]
 			: [
 				{ id: 'category', title: 'Category' },
 				{ id: 'tenderNumber', title: 'Tender Number' },
 				{ id: 'description', title: 'Tender Description' },
 				{ id: 'advertised', title: 'Advertised' },
-				{ id: 'cancelled', title: 'Cancelled' }
+				{ id: 'cancelled', title: 'Cancelled' },
+				{ id: 'sourceUrl', title: 'Source URL' },
+				{ id: 'tenderId', title: 'Tender ID' }
 			]
 	});
 	await csvWriter.writeRecords(records.map(r => ({
@@ -250,6 +264,8 @@ async function writeCsv(records, outPath, status = 4) {
 		briefingVenue: r.briefingVenue ?? '',
 		eSubmission: r.eSubmission ?? '',
 		twoEnvelopeSubmission: r.twoEnvelopeSubmission ?? '',
+		sourceUrl: r.sourceUrl ?? '',
+		tenderId: r.tenderId ?? '',
 		cancelled: r.cancelled ?? ''
 	})));
 	console.log(`Wrote ${records.length} rows to ${outPath}`);
