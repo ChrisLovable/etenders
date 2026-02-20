@@ -1,7 +1,7 @@
 [build]
   functions = "netlify/functions"
   publish = "web"
-  command = "node -e \"const fs=require('fs'); fs.mkdirSync('web/data',{recursive:true}); fs.mkdirSync('web/assets',{recursive:true}); fs.copyFileSync('advertised_tenders.csv','web/data/advertised_tenders.csv'); if(fs.existsSync('ai_opportunities.csv')) fs.copyFileSync('ai_opportunities.csv','web/data/ai_opportunities.csv'); if(fs.existsSync('public/proper192.png')) fs.copyFileSync('public/proper192.png','web/assets/proper192.png'); if(fs.existsSync('public/proper512.png')) fs.copyFileSync('public/proper512.png','web/assets/proper512.png');\""
+  command = "node -e \"const fs=require('fs'); fs.mkdirSync('web/data',{recursive:true}); fs.mkdirSync('web/assets',{recursive:true}); fs.copyFileSync('advertised_tenders.csv','web/data/advertised_tenders.csv'); if(fs.existsSync('ai_opportunities.csv')) fs.copyFileSync('ai_opportunities.csv','web/data/ai_opportunities.csv'); const p192=fs.existsSync('public/proper192.png')?'public/proper192.png':(fs.existsSync('public/PROPER192.png')?'public/PROPER192.png':null); const p512=fs.existsSync('public/proper512.png')?'public/proper512.png':(fs.existsSync('public/PROPER512.png')?'public/PROPER512.png':null); if(p192) fs.copyFileSync(p192,'web/assets/proper192.png'); if(p512) fs.copyFileSync(p512,'web/assets/proper512.png');\""
 
 [functions]
   included_files = ["./advertised_tenders.csv", "./ai_opportunities.csv"]

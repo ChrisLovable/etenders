@@ -517,27 +517,35 @@ if (updateBtn) {
   });
 }
 
-// PWA Install button: show only when installable, hide when installed
+// Register service worker (required for PWA install prompt)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
+
+// PWA Install button: visible when not installed; hide when running as installed app
 const installBtn = $('installBtn');
 let deferredPrompt;
 if (installBtn) {
   const hideInstall = () => { installBtn.style.display = 'none'; };
-  const showInstall = () => { installBtn.style.display = ''; };
-  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) hideInstall();
-  else {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      showInstall();
-    });
-    window.addEventListener('appinstalled', () => { deferredPrompt = null; hideInstall(); });
-    installBtn.addEventListener('click', async () => {
-      if (!deferredPrompt) return;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (isStandalone) hideInstall();
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+  window.addEventListener('appinstalled', () => { deferredPrompt = null; hideInstall(); });
+  installBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') { deferredPrompt = null; hideInstall(); }
-    });
-  }
+    } else if (isIOS) {
+      alert('To install: tap the Share button, then "Add to Home Screen"');
+    } else {
+      alert('To install: use your browser menu (⋮) and look for "Install app" or "Add to Home Screen"');
+    }
+  });
 }
 
 (async function init(){
