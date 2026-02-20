@@ -59,7 +59,6 @@ body{margin:0;padding:0;min-height:100%;font-family:'Inter',system-ui,-apple-sys
 .view-source{text-decoration:none;display:inline-flex;align-items:center}
 .highlight{color:var(--accent)}
 .kv{display:grid;grid-template-columns:120px 1fr;gap:6px;font-size:13px;word-break:break-word}
-.footer{padding:20px;text-align:center;color:var(--muted);border-top:1px solid var(--border);background:#000000}
 .muted{color:var(--muted);font-size:12px}
 
 /* Tablet */
@@ -91,7 +90,6 @@ body{margin:0;padding:0;min-height:100%;font-family:'Inter',system-ui,-apple-sys
   .flags label{min-height:44px;min-width:44px;align-items:center}
   .btn.sm{min-height:44px;padding:8px 12px;font-size:12px}
   .view-source{min-height:44px;align-items:center;justify-content:center}
-  .footer{padding:16px;font-size:11px}
 }
 
 /* Small phone */

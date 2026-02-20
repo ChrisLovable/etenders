@@ -266,9 +266,9 @@ if (updateBtn) {
       const res = await fetch('/api/update');
       const data = await res.json();
       if (res.ok) {
-        updateMsg.textContent = `${data.added} new record(s) added`;
+        updateMsg.textContent = data.message || `${data.added} new record(s) added`;
         // reload dataset if we added anything
-        if (data.added > 0) {
+        if (data.added > 0 && !data.readOnly) {
           const adv = await (await fetch('/data/advertised_tenders.csv')).text();
           Papa.parse(adv,{header:true,skipEmptyLines:true,complete:({data})=>{ rows=data; buildFilters(rows); filterRows(); }});
         }

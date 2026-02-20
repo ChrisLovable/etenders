@@ -8,10 +8,23 @@ const { stringify } = require('csv-stringify/sync');
 const app = express();
 const PORT = process.env.PORT || 5173;
 
+// Serverless (Netlify, Lambda, etc.): filesystem is read-only except /tmp
+const WRITABLE_DIR = process.env.NETLIFY ? '/tmp' : __dirname;
+const CSV_FILENAME = 'advertised_tenders.csv';
+const FLAGS_FILENAME = 'flags.json';
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'web')));
 
-// Serve CSV files from root for convenience
+// Serve advertised_tenders.csv from writable dir if updated, else from project root
+app.get('/data/advertised_tenders.csv', (req, res) => {
+	const tmpPath = path.join(WRITABLE_DIR, CSV_FILENAME);
+	const rootPath = path.join(__dirname, CSV_FILENAME);
+	const p = fs.existsSync(tmpPath) ? tmpPath : rootPath;
+	res.type('text/csv').sendFile(p);
+});
+
+// Serve other data files from project root
 app.use('/data', express.static(__dirname));
 
 function parseCsvDate(value) {
@@ -82,12 +95,15 @@ async function fetchAdvertisedAll() {
 
 app.get('/api/update', async (req, res) => {
 	try {
-		const csvPath = path.join(__dirname, 'advertised_tenders.csv');
+		const tmpPath = path.join(WRITABLE_DIR, CSV_FILENAME);
+		const rootPath = path.join(__dirname, CSV_FILENAME);
+		const readPath = fs.existsSync(tmpPath) ? tmpPath : rootPath;
+
 		let existing = [];
 		let lastMax = new Date('1900-01-01');
 		let seenNumbers = new Set();
-		if (fs.existsSync(csvPath)) {
-			const raw = fs.readFileSync(csvPath, 'utf8');
+		if (fs.existsSync(readPath)) {
+			const raw = fs.readFileSync(readPath, 'utf8');
 			existing = parse(raw, { columns: true, skip_empty_lines: true });
 			for (const r of existing) {
 				if (r['Tender Number']) seenNumbers.add(r['Tender Number']);
@@ -129,7 +145,7 @@ app.get('/api/update', async (req, res) => {
 				'Tender ID': r['Tender ID'] || ''
 			}))];
 			const csv = stringify(merged, { header: true });
-			fs.writeFileSync(csvPath, csv);
+			fs.writeFileSync(tmpPath, csv);
 		}
 		res.json({ added, lastAdvertised: formatDate(lastMax) });
 	} catch (err) {
@@ -138,15 +154,20 @@ app.get('/api/update', async (req, res) => {
 });
 
 // Tiny backend store for card flags (reviewed/tendered)
-const FLAGS_PATH = path.join(__dirname, 'flags.json');
+const FLAGS_PATH = path.join(WRITABLE_DIR, FLAGS_FILENAME);
+const FLAGS_ROOT = path.join(__dirname, FLAGS_FILENAME);
 
 function loadFlags() {
-	try {
-		const raw = fs.readFileSync(FLAGS_PATH, 'utf8');
-		return JSON.parse(raw);
-	} catch (e) {
-		return {};
+	const paths = [FLAGS_PATH, FLAGS_ROOT];
+	for (const p of paths) {
+		try {
+			if (fs.existsSync(p)) {
+				const raw = fs.readFileSync(p, 'utf8');
+				return JSON.parse(raw);
+			}
+		} catch (e) { /* try next */ }
 	}
+	return {};
 }
 
 function saveFlags(obj) {
@@ -154,6 +175,7 @@ function saveFlags(obj) {
 		fs.writeFileSync(FLAGS_PATH, JSON.stringify(obj, null, 2));
 		return true;
 	} catch (e) {
+		if (e.code === 'EROFS') return true; // client uses localStorage as fallback
 		return false;
 	}
 }
