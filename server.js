@@ -321,13 +321,15 @@ app.get('/api/flags', (req, res) => {
 });
 
 app.post('/api/flags', (req, res) => {
-	const { tenderNumber, reviewed, tendered, comment } = req.body || {};
+	const { tenderNumber, interested, reviewed, tendered, notInterested, comment } = req.body || {};
 	if (!tenderNumber) return res.status(400).json({ error: 'tenderNumber required' });
 	const flags = loadFlags();
 	const prev = flags[tenderNumber] || {};
 	flags[tenderNumber] = {
+		interested: interested !== undefined ? !!interested : !!prev.interested,
 		reviewed: reviewed !== undefined ? !!reviewed : !!prev.reviewed,
 		tendered: tendered !== undefined ? !!tendered : !!prev.tendered,
+		notInterested: notInterested !== undefined ? !!notInterested : !!prev.notInterested,
 		comment: comment !== undefined ? String(comment) : (prev.comment || '')
 	};
 	if (!saveFlags(flags)) return res.status(500).json({ error: 'Failed to save' });

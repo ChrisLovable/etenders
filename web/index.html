@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css" />
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#0ea5e9" />
 </head>
 <body>
 <div id="app">
@@ -16,6 +18,7 @@
       <img src="/assets/logo.png" alt="Proper Consulting Engineers" class="logo" />
       <div class="titles"></div>
     </div>
+    <button id="installBtn" class="btn primary" style="display:none">Install</button>
   </header>
 
   <section class="controls">
@@ -45,6 +48,16 @@
         <option value="this_year">This year</option>
         <option value="last_year">Last year</option>
       </select>
+      <div class="show-dropdown" id="showDropdown">
+        <button type="button" class="show-trigger select" id="showTrigger">Show</button>
+        <div class="show-panel" id="showPanel" aria-hidden="true">
+          <label class="show-option"><input type="checkbox" id="showAll" checked /> Show all</label>
+          <label class="show-option"><input type="checkbox" id="showInterested" /> Interested</label>
+          <label class="show-option"><input type="checkbox" id="showReviewed" /> Reviewed</label>
+          <label class="show-option"><input type="checkbox" id="showTendered" /> Tendered</label>
+          <label class="show-option"><input type="checkbox" id="showNotInterested" /> Not interested</label>
+        </div>
+      </div>
     </div>
   </section>
 

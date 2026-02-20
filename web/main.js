@@ -165,6 +165,17 @@ function tokensFromQuery(q){
     .filter(Boolean);
 }
 
+function getTenderFlags(tenderNumber){
+  const localSaved = JSON.parse(localStorage.getItem('tenderFlags')||'{}');
+  const sv = serverFlags[tenderNumber] || {};
+  return {
+    interested: (sv.interested !== undefined) ? sv.interested : localSaved[`int_${tenderNumber}`],
+    reviewed: (sv.reviewed !== undefined) ? sv.reviewed : localSaved[`rev_${tenderNumber}`],
+    tendered: (sv.tendered !== undefined) ? sv.tendered : localSaved[`ten_${tenderNumber}`],
+    notInterested: (sv.notInterested !== undefined) ? sv.notInterested : localSaved[`nint_${tenderNumber}`]
+  };
+}
+
 function filterRows(){
   const tq = tokensFromQuery(qInput.value);
   const province = provinceSel?.value;
@@ -172,12 +183,24 @@ function filterRows(){
   const category = categorySel?.value;
   const wantAI = false;
   const { from, to } = rangeToDates(advRange ? advRange.value : 'any');
+  const showAll = $('showAll')?.checked;
+  const showInterested = $('showInterested')?.checked;
+  const showReviewed = $('showReviewed')?.checked;
+  const showTendered = $('showTendered')?.checked;
+  const showNotInterested = $('showNotInterested')?.checked;
+  const showAny = !showAll && (showInterested || showReviewed || showTendered || showNotInterested);
 
   const filtered = rows.filter(r=>{
     if (province && r['Province']!==province) return false;
     if (organ && r['Organ Of State']!==organ) return false;
     if (category && r['Category']!==category) return false;
     if (wantAI && !aiMap.get(r['Tender Number'])) return false;
+
+    if (showAny){
+      const f = getTenderFlags(r['Tender Number']);
+      const match = (showInterested && f.interested) || (showReviewed && f.reviewed) || (showTendered && f.tendered) || (showNotInterested && f.notInterested);
+      if (!match) return false;
+    }
 
     if (from || to){
       const d = parseCsvDate(r['Advertised']); // expects DD/MM/YYYY
@@ -227,7 +250,21 @@ function render(data){
     viewBtn.rel = 'noopener noreferrer';
     viewBtn.className = 'btn primary sm view-source';
     viewBtn.textContent = 'View on eTenders';
-    meta.appendChild(viewBtn);
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'btn primary sm';
+    copyBtn.textContent = 'Copy tender number';
+    copyBtn.title = 'Copy to clipboard';
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(tenderNumber);
+        const t = copyBtn.textContent; copyBtn.textContent = 'Copied!'; setTimeout(() => { copyBtn.textContent = t; }, 1500);
+      } catch (_) {}
+    });
+    const metaActions = document.createElement('div');
+    metaActions.className = 'meta-actions';
+    metaActions.appendChild(viewBtn);
+    metaActions.appendChild(copyBtn);
+    meta.appendChild(metaActions);
     card.appendChild(meta);
 
     const kv=document.createElement('div');kv.className='kv';
@@ -245,44 +282,63 @@ function render(data){
     add('Where', r['Place where goods, works or services are required']);
     card.appendChild(kv);
 
-    // Flags: Reviewed / Tendered (persist to localStorage keyed by tender number)
+    // Flags: Interested / Reviewed / Tendered / Not interested (persist to localStorage keyed by tender number)
     const flags=document.createElement('div');flags.className='flags';
+    const interestedId = `int_${r['Tender Number']}`;
     const reviewedId = `rev_${r['Tender Number']}`;
     const tenderedId = `ten_${r['Tender Number']}`;
+    const notInterestedId = `nint_${r['Tender Number']}`;
+    const interested = document.createElement('input'); interested.type='checkbox'; interested.id=interestedId;
     const reviewed = document.createElement('input'); reviewed.type='checkbox'; reviewed.id=reviewedId;
     const tendered = document.createElement('input'); tendered.type='checkbox'; tendered.id=tenderedId;
+    const notInterested = document.createElement('input'); notInterested.type='checkbox'; notInterested.id=notInterestedId;
 
     // Load persisted (server first, fallback to localStorage)
     const localSaved = JSON.parse(localStorage.getItem('tenderFlags')||'{}');
     const sv = serverFlags[r['Tender Number']] || {};
+    const initialInterested = (sv.interested !== undefined) ? sv.interested : localSaved[interestedId];
     const initialReviewed = (sv.reviewed !== undefined) ? sv.reviewed : localSaved[reviewedId];
     const initialTendered = (sv.tendered !== undefined) ? sv.tendered : localSaved[tenderedId];
+    const initialNotInterested = (sv.notInterested !== undefined) ? sv.notInterested : localSaved[notInterestedId];
+    if (initialInterested) { interested.checked = true; card.classList.add('interested'); }
     if (initialReviewed) { reviewed.checked = true; card.classList.add('reviewed'); }
     if (initialTendered) { tendered.checked = true; card.classList.add('tendered'); }
+    if (initialNotInterested) { notInterested.checked = true; card.classList.add('not-interested'); }
 
     const saveFlags = ()=>{
       const obj = JSON.parse(localStorage.getItem('tenderFlags')||'{}');
+      obj[interestedId] = interested.checked;
       obj[reviewedId] = reviewed.checked;
       obj[tenderedId] = tendered.checked;
+      obj[notInterestedId] = notInterested.checked;
       localStorage.setItem('tenderFlags', JSON.stringify(obj));
-      // Try to persist to server
-      fetch('/api/flags', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ tenderNumber: r['Tender Number'], reviewed: reviewed.checked, tendered: tendered.checked }) }).catch(()=>{});
+      const tn = r['Tender Number'];
+      serverFlags[tn] = { ...(serverFlags[tn]||{}), interested: interested.checked, reviewed: reviewed.checked, tendered: tendered.checked, notInterested: notInterested.checked };
+      fetch('/api/flags', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ tenderNumber: tn, interested: interested.checked, reviewed: reviewed.checked, tendered: tendered.checked, notInterested: notInterested.checked }) }).catch(()=>{});
+      if (interested.checked) card.classList.add('interested'); else card.classList.remove('interested');
       if (reviewed.checked) card.classList.add('reviewed'); else card.classList.remove('reviewed');
       if (tendered.checked) card.classList.add('tendered'); else card.classList.remove('tendered');
+      if (notInterested.checked) card.classList.add('not-interested'); else card.classList.remove('not-interested');
+      filterRows();
     };
+    interested.addEventListener('change', saveFlags);
     reviewed.addEventListener('change', saveFlags);
     tendered.addEventListener('change', saveFlags);
+    notInterested.addEventListener('change', saveFlags);
 
+    const iLabel=document.createElement('label'); iLabel.htmlFor=interestedId; iLabel.innerHTML='<span>Interested</span>'; iLabel.prepend(interested);
     const rLabel=document.createElement('label'); rLabel.htmlFor=reviewedId; rLabel.innerHTML='<span>Reviewed</span>'; rLabel.prepend(reviewed);
     const tLabel=document.createElement('label'); tLabel.htmlFor=tenderedId; tLabel.innerHTML='<span>Tendered</span>'; tLabel.prepend(tendered);
-    // Immediate visual feedback on click (before change fires)
+    const niLabel=document.createElement('label'); niLabel.htmlFor=notInterestedId; niLabel.innerHTML='<span>Not interested</span>'; niLabel.prepend(notInterested);
+    iLabel.addEventListener('click', ()=>{ const willBe=!interested.checked; if(willBe) card.classList.add('interested'); else card.classList.remove('interested'); });
     rLabel.addEventListener('click', ()=>{ const willBe=!reviewed.checked; if(willBe) card.classList.add('reviewed'); else card.classList.remove('reviewed'); });
     tLabel.addEventListener('click', ()=>{ const willBe=!tendered.checked; if(willBe) card.classList.add('tendered'); else card.classList.remove('tendered'); });
+    niLabel.addEventListener('click', ()=>{ const willBe=!notInterested.checked; if(willBe) card.classList.add('not-interested'); else card.classList.remove('not-interested'); });
     // Add comment button inline with flags
     const commentBtn = document.createElement('button');
     commentBtn.className='btn primary sm';
     commentBtn.textContent='Add comment';
-    flags.appendChild(rLabel); flags.appendChild(tLabel); flags.appendChild(commentBtn);
+    flags.appendChild(iLabel); flags.appendChild(rLabel); flags.appendChild(tLabel); flags.appendChild(niLabel); flags.appendChild(commentBtn);
     card.appendChild(flags);
 
     // Add comment section (toggleable)
@@ -414,6 +470,24 @@ provinceSel?.addEventListener('change', filterRows);
 organSel?.addEventListener('change', filterRows);
 categorySel?.addEventListener('change', filterRows);
 if (advRange) advRange.addEventListener('change', filterRows);
+// Show dropdown (Interested/Reviewed/Tendered filter)
+const showTrigger = $('showTrigger');
+const showPanel = $('showPanel');
+const showDropdown = $('showDropdown');
+if (showTrigger && showPanel && showDropdown) {
+  showTrigger.addEventListener('click', (e)=>{ e.stopPropagation(); const open = showPanel.getAttribute('aria-hidden')!=='false'; showPanel.setAttribute('aria-hidden', !open); });
+  document.addEventListener('click', (e)=>{ if (!showDropdown.contains(e.target)) showPanel.setAttribute('aria-hidden','true'); });
+  const showCbs = [$('showAll'), $('showInterested'), $('showReviewed'), $('showTendered'), $('showNotInterested')];
+  showCbs.forEach(cb=> cb?.addEventListener('change', ()=>{
+    if ($('showAll')?.checked) {
+      $('showInterested').checked = true;
+      $('showReviewed').checked = true;
+      $('showTendered').checked = true;
+      $('showNotInterested').checked = true;
+    }
+    filterRows();
+  }));
+}
 qInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ filterRows(); }});
 let searchDebounce;
 qInput.addEventListener('input', ()=>{ clearTimeout(searchDebounce); searchDebounce=setTimeout(filterRows, 300); });
@@ -441,6 +515,29 @@ if (updateBtn) {
       updateBtn.disabled = false;
     }
   });
+}
+
+// PWA Install button: show only when installable, hide when installed
+const installBtn = $('installBtn');
+let deferredPrompt;
+if (installBtn) {
+  const hideInstall = () => { installBtn.style.display = 'none'; };
+  const showInstall = () => { installBtn.style.display = ''; };
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) hideInstall();
+  else {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      showInstall();
+    });
+    window.addEventListener('appinstalled', () => { deferredPrompt = null; hideInstall(); });
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') { deferredPrompt = null; hideInstall(); }
+    });
+  }
 }
 
 (async function init(){
