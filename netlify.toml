@@ -2,8 +2,27 @@
   functions = "netlify/functions"
   publish = "web"
 
+# Serve static files from CDN; only proxy API and dynamic routes to the serverless function
 [[redirects]]
-  from = "/*"
+  from = "/api/*"
+  to = "/.netlify/functions/server"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/tender/*"
+  to = "/.netlify/functions/server"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/tender-lookup"
+  to = "/.netlify/functions/server"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/data/*"
   to = "/.netlify/functions/server"
   status = 200
   force = true
