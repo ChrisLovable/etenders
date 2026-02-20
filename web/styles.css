@@ -75,6 +75,7 @@ body{margin:0;padding:0;min-height:100%;font-family:'Inter',system-ui,-apple-sys
 .highlight{color:var(--accent)}
 .kv{display:grid;grid-template-columns:120px 1fr;gap:6px;font-size:13px;word-break:break-word}
 .muted{color:var(--muted);font-size:12px}
+#stats{font-size:18px;font-weight:500;color:var(--text)}
 
 /* Custom criteria modal */
 .modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:20px;opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;overflow-y:auto;overflow-x:hidden}
