@@ -8,23 +8,23 @@ const { stringify } = require('csv-stringify/sync');
 const app = express();
 const PORT = process.env.PORT || 5173;
 
-// Serverless (Netlify, Lambda, etc.): filesystem is read-only except /tmp
-const WRITABLE_DIR = process.env.NETLIFY ? '/tmp' : __dirname;
+// Serverless (Netlify, Lambda, etc.): filesystem is read-only except /tmp - ALWAYS use /tmp explicitly
+const IS_SERVERLESS = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const TMP_CSV = '/tmp/advertised_tenders.csv';
+const TMP_FLAGS = '/tmp/flags.json';
 const CSV_FILENAME = 'advertised_tenders.csv';
 const FLAGS_FILENAME = 'flags.json';
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'web')));
 
-// Serve advertised_tenders.csv from writable dir if updated, else from project root
+// Serve advertised_tenders.csv - /tmp if updated (serverless), else project root (local)
 app.get('/data/advertised_tenders.csv', (req, res) => {
-	const tmpPath = path.join(WRITABLE_DIR, CSV_FILENAME);
-	const rootPath = path.join(__dirname, CSV_FILENAME);
-	const p = fs.existsSync(tmpPath) ? tmpPath : rootPath;
-	res.type('text/csv').sendFile(p);
+	const p = (IS_SERVERLESS && fs.existsSync(TMP_CSV)) ? TMP_CSV : path.join(__dirname, CSV_FILENAME);
+	res.type('text/csv').sendFile(path.resolve(p));
 });
 
-// Serve other data files from project root
+// Serve other data files from project root (local only; /data/* served by CDN in prod)
 app.use('/data', express.static(__dirname));
 
 function parseCsvDate(value) {
@@ -95,9 +95,17 @@ async function fetchAdvertisedAll() {
 
 app.get('/api/update', async (req, res) => {
 	try {
-		const tmpPath = path.join(WRITABLE_DIR, CSV_FILENAME);
-		const rootPath = path.join(__dirname, CSV_FILENAME);
-		const readPath = fs.existsSync(tmpPath) ? tmpPath : rootPath;
+		// Serverless: use /tmp ONLY - never /var/task. Bootstrap from CDN if /tmp empty.
+		let readPath = TMP_CSV;
+		if (IS_SERVERLESS && !fs.existsSync(TMP_CSV)) {
+			try {
+				const base = req.headers['x-forwarded-proto'] ? `${req.headers['x-forwarded-proto']}://${req.headers['x-forwarded-host'] || req.headers.host}` : `https://${req.headers.host || 'localhost'}`;
+				const { data } = await axios.get(`${base}/data/advertised_tenders.csv`, { timeout: 10000 });
+				fs.writeFileSync(TMP_CSV, data);
+			} catch (_) { /* start with empty */ }
+		} else if (!IS_SERVERLESS) {
+			readPath = path.join(__dirname, CSV_FILENAME);
+		}
 
 		let existing = [];
 		let lastMax = new Date('1900-01-01');
@@ -145,7 +153,9 @@ app.get('/api/update', async (req, res) => {
 				'Tender ID': r['Tender ID'] || ''
 			}))];
 			const csv = stringify(merged, { header: true });
-			fs.writeFileSync(tmpPath, csv);
+			fs.writeFileSync(TMP_CSV, csv);
+			// Return CSV in response so frontend can use it (CDN serves static file, not updated)
+			return res.json({ added, lastAdvertised: formatDate(lastMax), csv });
 		}
 		res.json({ added, lastAdvertised: formatDate(lastMax) });
 	} catch (err) {
@@ -154,19 +164,15 @@ app.get('/api/update', async (req, res) => {
 });
 
 // Tiny backend store for card flags (reviewed/tendered)
-const FLAGS_PATH = path.join(WRITABLE_DIR, FLAGS_FILENAME);
-const FLAGS_ROOT = path.join(__dirname, FLAGS_FILENAME);
+const FLAGS_PATH = IS_SERVERLESS ? TMP_FLAGS : path.join(__dirname, FLAGS_FILENAME);
 
 function loadFlags() {
-	const paths = [FLAGS_PATH, FLAGS_ROOT];
-	for (const p of paths) {
-		try {
-			if (fs.existsSync(p)) {
-				const raw = fs.readFileSync(p, 'utf8');
-				return JSON.parse(raw);
-			}
-		} catch (e) { /* try next */ }
-	}
+	try {
+		if (fs.existsSync(FLAGS_PATH)) {
+			const raw = fs.readFileSync(FLAGS_PATH, 'utf8');
+			return JSON.parse(raw);
+		}
+	} catch (e) {}
 	return {};
 }
 

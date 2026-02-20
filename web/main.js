@@ -267,10 +267,10 @@ if (updateBtn) {
       const data = await res.json();
       if (res.ok) {
         updateMsg.textContent = data.message || `${data.added} new record(s) added`;
-        // reload dataset if we added anything
+        // reload dataset if we added anything (use returned csv or refetch)
         if (data.added > 0 && !data.readOnly) {
-          const adv = await (await fetch('/data/advertised_tenders.csv')).text();
-          Papa.parse(adv,{header:true,skipEmptyLines:true,complete:({data})=>{ rows=data; buildFilters(rows); filterRows(); }});
+          const csvText = data.csv || (await (await fetch('/data/advertised_tenders.csv')).text());
+          Papa.parse(csvText,{header:true,skipEmptyLines:true,complete:({data})=>{ rows=data; buildFilters(rows); filterRows(); }});
         }
       } else {
         updateMsg.textContent = data.error || 'Update failed';

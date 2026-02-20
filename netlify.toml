@@ -1,6 +1,10 @@
 [build]
   functions = "netlify/functions"
   publish = "web"
+  command = "node -e \"const fs=require('fs'); fs.mkdirSync('web/data',{recursive:true}); fs.copyFileSync('advertised_tenders.csv','web/data/advertised_tenders.csv'); if(fs.existsSync('ai_opportunities.csv')) fs.copyFileSync('ai_opportunities.csv','web/data/ai_opportunities.csv');\""
+
+[functions]
+  included_files = ["./advertised_tenders.csv", "./ai_opportunities.csv"]
 
 # Serve static files from CDN; only proxy API and dynamic routes to the serverless function
 [[redirects]]
@@ -21,8 +25,4 @@
   status = 200
   force = true
 
-[[redirects]]
-  from = "/data/*"
-  to = "/.netlify/functions/server"
-  status = 200
-  force = true
+# /data/* served from CDN (web/data/) - no function needed for static CSV
