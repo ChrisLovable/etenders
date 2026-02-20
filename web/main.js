@@ -1,5 +1,6 @@
 const advertisedCsvUrl = '/data/advertised_tenders.csv';
 const aiCsvUrl = '/data/ai_opportunities.csv';
+const CUSTOM_CRITERIA_KEY = 'etenders_custom_criteria';
 
 const $ = (id) => document.getElementById(id);
 const grid = $('grid');
@@ -24,12 +25,129 @@ async function loadCsv(url){
 function buildFilters(data){
   const unique = (key)=>[...new Set(data.map(r=>r[key]).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b)));
   for(const [sel, key, label] of [[provinceSel,'Province','All provinces'],[organSel,'Organ Of State','All organs'],[categorySel,'Category','All categories']]){
+    if (!sel) continue;
     sel.innerHTML = '';
     const opt0 = document.createElement('option'); opt0.value=''; opt0.textContent=label; sel.appendChild(opt0);
     for(const v of unique(key)){
       const o=document.createElement('option'); o.value=v; o.textContent=v; sel.appendChild(o);
     }
   }
+}
+
+function getUniqueValues(key){
+  return [...new Set(rows.map(r=>r[key]).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b)));
+}
+
+function getServiceValues(){
+  return getUniqueValues('Category').filter(c=>String(c).startsWith('Services:'));
+}
+
+function loadCustomCriteria(){
+  try {
+    const raw = localStorage.getItem(CUSTOM_CRITERIA_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (_) { return {}; }
+}
+
+function saveCustomCriteria(criteria){
+  localStorage.setItem(CUSTOM_CRITERIA_KEY, JSON.stringify(criteria));
+}
+
+function populateCriteriaModal(){
+  const container = (id) => $(id);
+  const renderCheckboxes = (containerId, key, values) => {
+    const box = container(containerId);
+    if (!box) return;
+    box.innerHTML = '';
+    const saved = loadCustomCriteria();
+    const selected = new Set(saved[key] || []);
+    const vals = values || getUniqueValues(key === 'categories' ? 'Category' : key === 'provinces' ? 'Province' : 'Organ Of State');
+    for (const v of vals) {
+      const label = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = v;
+      cb.checked = selected.has(v);
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(v));
+      box.appendChild(label);
+    }
+  };
+  renderCheckboxes('categoryCheckboxes', 'categories');
+  renderCheckboxes('servicesCheckboxes', 'services', getServiceValues());
+  renderCheckboxes('provinceCheckboxes', 'provinces');
+  renderCheckboxes('organCheckboxes', 'organs');
+  const wordsInput = $('customWords');
+  if (wordsInput) {
+    const saved = loadCustomCriteria();
+    wordsInput.value = (saved.customWords || []).join(', ');
+  }
+  const advRangeSel = $('criteriaAdvRange');
+  if (advRangeSel) {
+    const saved = loadCustomCriteria();
+    advRangeSel.value = saved.advRange || 'any';
+  }
+}
+
+function openCriteriaModal(){
+  populateCriteriaModal();
+  const modal = $('customCriteriaModal');
+  if (modal) { modal.setAttribute('aria-hidden', 'false'); }
+}
+
+function closeCriteriaModal(){
+  const modal = $('customCriteriaModal');
+  if (modal) { modal.setAttribute('aria-hidden', 'true'); }
+}
+
+function applySearchMyCriteria(){
+  const saved = loadCustomCriteria();
+  if (!saved || (Object.keys(saved).length === 0) || (
+    (!saved.categories || saved.categories.length === 0) &&
+    (!saved.services || saved.services.length === 0) &&
+    (!saved.provinces || saved.provinces.length === 0) &&
+    (!saved.organs || saved.organs.length === 0) &&
+    (!saved.customWords || saved.customWords.length === 0) &&
+    (!saved.advRange || saved.advRange === 'any')
+  )) {
+    if (stats) stats.textContent = 'No saved criteria. Click "Custom criteria" to set up.';
+    grid.innerHTML = '';
+    return;
+  }
+  filterByCustomCriteria();
+}
+
+function filterByCustomCriteria(){
+  const saved = loadCustomCriteria();
+  const tq = tokensFromQuery(saved.customWords ? saved.customWords.join(' ') : '');
+  const provinces = new Set(saved.provinces || []);
+  const organs = new Set(saved.organs || []);
+  const categories = new Set(saved.categories || []);
+  const services = new Set(saved.services || []);
+  const { from, to } = rangeToDates(saved.advRange || 'any');
+
+  const filtered = rows.filter(r=>{
+    if (provinces.size && !provinces.has(r['Province'])) return false;
+    if (organs.size && !organs.has(r['Organ Of State'])) return false;
+    if (categories.size && !categories.has(r['Category'])) return false;
+    if (services.size && !services.has(r['Category'])) return false;
+    if (from || to){
+      const d = parseCsvDate(r['Advertised']);
+      if (from && d < startOfDay(from)) return false;
+      if (to && d > endOfDay(to)) return false;
+    }
+    if (!tq.length) return true;
+    const hay = normalizeText(`${r['Tender Number']} ${r['Tender Description']} ${r['Category']} ${r['Organ Of State']} ${r['Province']} ${r['Special Conditions']}`);
+    return tq.every(t=>hay.includes(t));
+  });
+
+  const scored = filtered.map(r=>{
+    const text = normalizeText(`${r['Tender Number']} ${r['Tender Description']} ${r['Category']}`);
+    const score = tq.reduce((acc,t)=>acc+(text.includes(t)?1:0),0);
+    return {row:r, score};
+  }).sort((a,b)=>b.score-a.score);
+
+  render(scored.map(x=>x.row));
 }
 
 function normalizeText(s){
@@ -49,9 +167,9 @@ function tokensFromQuery(q){
 
 function filterRows(){
   const tq = tokensFromQuery(qInput.value);
-  const province = provinceSel.value;
-  const organ = organSel.value;
-  const category = categorySel.value;
+  const province = provinceSel?.value;
+  const organ = organSel?.value;
+  const category = categorySel?.value;
   const wantAI = false;
   const { from, to } = rangeToDates(advRange ? advRange.value : 'any');
 
@@ -90,8 +208,7 @@ function render(data){
 
   for(const r of data){
     const card=document.createElement('div');
-    const isCivil = String(r['Category']||'').toLowerCase().includes('civil engineering');
-    card.className = 'card' + (isCivil ? ' civil' : '');
+    card.className = 'card';
 
     const title=document.createElement('div');title.className='title';
     title.textContent=r['Tender Description'];
@@ -140,7 +257,7 @@ function render(data){
     const sv = serverFlags[r['Tender Number']] || {};
     const initialReviewed = (sv.reviewed !== undefined) ? sv.reviewed : localSaved[reviewedId];
     const initialTendered = (sv.tendered !== undefined) ? sv.tendered : localSaved[tenderedId];
-    if (initialReviewed) reviewed.checked = true;
+    if (initialReviewed) { reviewed.checked = true; card.classList.add('reviewed'); }
     if (initialTendered) { tendered.checked = true; card.classList.add('tendered'); }
 
     const saveFlags = ()=>{
@@ -150,6 +267,7 @@ function render(data){
       localStorage.setItem('tenderFlags', JSON.stringify(obj));
       // Try to persist to server
       fetch('/api/flags', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ tenderNumber: r['Tender Number'], reviewed: reviewed.checked, tendered: tendered.checked }) }).catch(()=>{});
+      if (reviewed.checked) card.classList.add('reviewed'); else card.classList.remove('reviewed');
       if (tendered.checked) card.classList.add('tendered'); else card.classList.remove('tendered');
     };
     reviewed.addEventListener('change', saveFlags);
@@ -157,6 +275,9 @@ function render(data){
 
     const rLabel=document.createElement('label'); rLabel.htmlFor=reviewedId; rLabel.innerHTML='<span>Reviewed</span>'; rLabel.prepend(reviewed);
     const tLabel=document.createElement('label'); tLabel.htmlFor=tenderedId; tLabel.innerHTML='<span>Tendered</span>'; tLabel.prepend(tendered);
+    // Immediate visual feedback on click (before change fires)
+    rLabel.addEventListener('click', ()=>{ const willBe=!reviewed.checked; if(willBe) card.classList.add('reviewed'); else card.classList.remove('reviewed'); });
+    tLabel.addEventListener('click', ()=>{ const willBe=!tendered.checked; if(willBe) card.classList.add('tendered'); else card.classList.remove('tendered'); });
     // Add comment button inline with flags
     const commentBtn = document.createElement('button');
     commentBtn.className='btn primary sm';
@@ -175,7 +296,6 @@ function render(data){
     const cancelComment = document.createElement('button'); cancelComment.className='btn'; cancelComment.textContent='Cancel';
     commentActions.appendChild(saveComment); commentActions.appendChild(cancelComment);
     commentWrap.appendChild(textarea); commentWrap.appendChild(commentActions);
-    card.appendChild(commentBtn);
     card.appendChild(commentWrap);
 
     // Populate from server/local if exists
@@ -249,12 +369,50 @@ function rangeToDates(value){
 
 $('searchBtn').addEventListener('click', filterRows);
 $('clearBtn').addEventListener('click', ()=>{qInput.value=''; if(advRange) advRange.value='any'; provinceSel.value=''; organSel.value=''; categorySel.value=''; filterRows();});
+
+$('customCriteriaBtn')?.addEventListener('click', openCriteriaModal);
+$('searchMyCriteriaBtn')?.addEventListener('click', applySearchMyCriteria);
+
+$('customCriteriaModal')?.querySelector('.modal-backdrop')?.addEventListener('click', closeCriteriaModal);
+$('customCriteriaModal')?.querySelector('.modal-close')?.addEventListener('click', closeCriteriaModal);
+$('customCriteriaModal')?.querySelector('.modal-close-btn')?.addEventListener('click', closeCriteriaModal);
+function clearCustomCriteria(){
+  saveCustomCriteria({});
+  populateCriteriaModal();
+  filterRows();
+}
+$('clearCustomCriteriaBtn')?.addEventListener('click', clearCustomCriteria);
+$('clearCustomCriteriaBtnMain')?.addEventListener('click', clearCustomCriteria);
+document.addEventListener('keydown', (e)=>{
+  if (e.key === 'Escape' && $('customCriteriaModal')?.getAttribute('aria-hidden') === 'false') closeCriteriaModal();
+});
+
+$('customCriteriaForm')?.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const getChecked = (containerId) => {
+    const box = $(containerId);
+    if (!box) return [];
+    return [...box.querySelectorAll('input[type="checkbox"]')].filter(cb=>cb.checked).map(cb=>cb.value);
+  };
+  const wordsRaw = ($('customWords')?.value || '').trim();
+  const customWords = wordsRaw ? wordsRaw.split(/[\s,]+/).map(w=>w.trim()).filter(Boolean) : [];
+  const criteria = {
+    categories: getChecked('categoryCheckboxes'),
+    services: getChecked('servicesCheckboxes'),
+    provinces: getChecked('provinceCheckboxes'),
+    organs: getChecked('organCheckboxes'),
+    customWords,
+    advRange: $('criteriaAdvRange')?.value || 'any'
+  };
+  saveCustomCriteria(criteria);
+  closeCriteriaModal();
+});
 // removed Export CSV button
 
 // removed AI toggle listener
-provinceSel.addEventListener('change', filterRows);
-organSel.addEventListener('change', filterRows);
-categorySel.addEventListener('change', filterRows);
+provinceSel?.addEventListener('change', filterRows);
+organSel?.addEventListener('change', filterRows);
+categorySel?.addEventListener('change', filterRows);
 if (advRange) advRange.addEventListener('change', filterRows);
 qInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ filterRows(); }});
 const updateBtn = document.getElementById('updateBtn');

@@ -24,6 +24,9 @@
         <button id="updateBtn" class="btn primary big">Update Latest</button>
         <button id="clearBtn" class="btn primary" title="Clear search">Clear</button>
         <button id="searchBtn" class="btn primary">Search</button>
+        <button id="customCriteriaBtn" class="btn primary" title="Set your saved search criteria">Custom criteria</button>
+        <button id="searchMyCriteriaBtn" class="btn primary" title="Search using your saved criteria">Search my criteria</button>
+        <button id="clearCustomCriteriaBtnMain" class="btn primary" title="Clear saved custom criteria">Clear Custom Criteria</button>
         <span id="updateMsg" class="muted" style="align-self:center"></span>
       </div>
       <input id="q" class="input" type="text" placeholder="Search keywords (e.g. AI, data, analytics, security)" />
@@ -44,6 +47,56 @@
       </select>
     </div>
   </section>
+
+  <div id="customCriteriaModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Custom criteria</h2>
+        <button type="button" class="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <form id="customCriteriaForm" class="modal-body">
+        <div class="criteria-section">
+          <label class="criteria-label">Custom search words (comma or space separated)</label>
+          <input type="text" id="customWords" class="input" placeholder="e.g. civil, engineering, roads, water" />
+        </div>
+        <div class="criteria-section">
+          <label class="criteria-label">Categories</label>
+          <div id="categoryCheckboxes" class="checkbox-group"></div>
+        </div>
+        <div class="criteria-section">
+          <label class="criteria-label">Services</label>
+          <div id="servicesCheckboxes" class="checkbox-group"></div>
+        </div>
+        <div class="criteria-section">
+          <label class="criteria-label">Provinces</label>
+          <div id="provinceCheckboxes" class="checkbox-group"></div>
+        </div>
+        <div class="criteria-section">
+          <label class="criteria-label">Organ of State</label>
+          <div id="organCheckboxes" class="checkbox-group"></div>
+        </div>
+        <div class="criteria-section">
+          <label class="criteria-label">Advertised date range</label>
+          <select id="criteriaAdvRange" class="select">
+            <option value="any">Any time</option>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+            <option value="this_month">This month</option>
+            <option value="last_month">Last month</option>
+            <option value="this_year">This year</option>
+            <option value="last_year">Last year</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn primary">Save criteria</button>
+          <button type="button" id="clearCustomCriteriaBtn" class="btn">Clear Custom Criteria</button>
+          <button type="button" class="btn modal-close-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <section class="results">
     <div id="stats" class="muted"></div>
