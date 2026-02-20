@@ -319,7 +319,7 @@ function render(data){
       if (reviewed.checked) card.classList.add('reviewed'); else card.classList.remove('reviewed');
       if (tendered.checked) card.classList.add('tendered'); else card.classList.remove('tendered');
       if (notInterested.checked) card.classList.add('not-interested'); else card.classList.remove('not-interested');
-      filterRows();
+      if ($('showAll')?.checked === false) setTimeout(filterRows, 0);
     };
     interested.addEventListener('change', saveFlags);
     reviewed.addEventListener('change', saveFlags);
@@ -541,9 +541,13 @@ if (installBtn) {
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') { deferredPrompt = null; hideInstall(); }
     } else if (isIOS) {
-      alert('To install: tap the Share button, then "Add to Home Screen"');
+      alert('To install: tap the Share button (square with arrow), then "Add to Home Screen"');
     } else {
-      alert('To install: use your browser menu (⋮) and look for "Install app" or "Add to Home Screen"');
+      const isChrome = /Chrome/.test(navigator.userAgent) && !/Edge/.test(navigator.userAgent);
+      const isEdge = /Edge/.test(navigator.userAgent);
+      if (isChrome) alert('To install: Click the ⋮ menu (top-right) → "Install eTenders Explorer" or "Add to Home Screen"');
+      else if (isEdge) alert('To install: Click the ⋯ menu (top-right) → "Apps" → "Install this site as an app"');
+      else alert('To install: Look in your browser menu for "Install app", "Add to Home Screen", or "Save page"');
     }
   });
 }
