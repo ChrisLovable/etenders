@@ -41,11 +41,11 @@ body{margin:0;padding:0;min-height:100%;font-family:'Inter',system-ui,-apple-sys
 .results{padding:12px 24px;background:#000000}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:12px}
 .card{background:var(--card);border:2px solid #ffffff;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;color:var(--text)}
-.card.reviewed{background:#0a1f44;border-color:#ffffff}
+.card.reviewed{background:#1e40af;border-color:#ffffff}
 .card.reviewed .title{color:#e6edf3}
 .card.reviewed .meta{color:#c9d4e5}
 .card.reviewed .kv{color:#e6edf3}
-.card.tendered{background:#0f6d3d;border-color:#ffffff}
+.card.tendered{background:#16a34a;border-color:#ffffff}
 .flags{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .flags label{display:flex;gap:8px;align-items:center;color:#d0d7e1;font-size:15px;cursor:pointer}
 .flags input[type="checkbox"]{width:15px;height:15px;accent-color:var(--accent);flex-shrink:0}

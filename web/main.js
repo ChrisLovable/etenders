@@ -415,6 +415,8 @@ organSel?.addEventListener('change', filterRows);
 categorySel?.addEventListener('change', filterRows);
 if (advRange) advRange.addEventListener('change', filterRows);
 qInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ filterRows(); }});
+let searchDebounce;
+qInput.addEventListener('input', ()=>{ clearTimeout(searchDebounce); searchDebounce=setTimeout(filterRows, 300); });
 const updateBtn = document.getElementById('updateBtn');
 const updateMsg = document.getElementById('updateMsg');
 if (updateBtn) {
