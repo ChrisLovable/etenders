@@ -18,8 +18,8 @@ const provinceRadios = $('provinceRadios');
 const organSel = $('organ');
 const categorySel = $('category');
 const advRange = $('advRange');
-const busyOverlay = $('busyOverlay');
-const busyText = $('busyText');
+const loadingOverlay = $('loadingOverlay');
+const loadingMessage = $('loadingMessage');
 // AI toggle removed per request
 
 function resizeGridViewport() {
@@ -36,19 +36,47 @@ function syncHeroOffset() {
   root.style.setProperty('--hero-offset', `${Math.max(0, h)}px`);
 }
 
-function setBusy(isBusy, text = 'Working...') {
-  if (!busyOverlay) return;
-  busyOverlay.setAttribute('aria-hidden', isBusy ? 'false' : 'true');
-  if (busyText) busyText.textContent = text;
+// Loading indicator functions
+function showLoading(message = 'Loading...') {
+  const overlay = loadingOverlay;
+  const messageEl = loadingMessage;
+  if (overlay) {
+    if (messageEl) messageEl.textContent = message;
+    overlay.classList.add('active');
+  }
 }
 
-async function runWithBusy(text, fn) {
-  setBusy(true, text);
+function hideLoading() {
+  const overlay = loadingOverlay;
+  if (overlay) {
+    overlay.classList.remove('active');
+  }
+}
+
+// Add spinner to button while loading
+function setButtonLoading(button, isLoading, text = null) {
+  if (!button) return;
+  if (isLoading) {
+    button.disabled = true;
+    const originalText = button.textContent;
+    button.setAttribute('data-original-text', originalText);
+    button.innerHTML = `<span class="spinner"></span>${text || originalText}`;
+  } else {
+    button.disabled = false;
+    const originalText = button.getAttribute('data-original-text');
+    if (originalText) button.textContent = originalText;
+  }
+}
+
+async function runWithBusy(text, fn, button = null, buttonText = null) {
+  if (button) setButtonLoading(button, true, buttonText);
+  showLoading(text);
   await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   try {
     return await fn();
   } finally {
-    setBusy(false);
+    if (button) setButtonLoading(button, false);
+    hideLoading();
   }
 }
 
@@ -68,6 +96,9 @@ let displayedData = [];
 let municipalScrapeView = null; // When set, we show ONLY this municipality's data; filterRows cannot override
 
 function isLikelyMunicipalSourceRow(r){
+  const src = String(r['Source'] || '').trim();
+  const category = String(r['Category'] || '').trim().toLowerCase();
+  if (category === 'municipal' && municipalSourceSet.has(src)) return true;
   const url = String(r['Source URL'] || '').toLowerCase().trim();
   const desc = String(r['Tender Description'] || '').toLowerCase();
   const num = String(r['Tender Number'] || '').trim();
@@ -119,11 +150,13 @@ function renderProvinceRadios(){
     input.name = 'provinceFilter';
     input.value = value;
     input.checked = (value === current);
-    input.addEventListener('change', () => {
+    input.addEventListener('change', async () => {
       if (!input.checked) return;
-      provinceSel.value = value;
-      loadMunicipalScrapers(value);
-      onFilterChange();
+      await runWithBusy('Updating province filters...', async () => {
+        provinceSel.value = value;
+        await loadMunicipalScrapers(value);
+        onFilterChange();
+      });
     });
     label.appendChild(input);
     label.appendChild(document.createTextNode(labelText));
@@ -486,35 +519,24 @@ function createCard(r){
     if (aiMap.get(r['Tender Number'])) meta.appendChild(badge('AI/Data'));
     const tenderId = r['Tender ID'];
     const tenderNumber = r['Tender Number'] || '';
-    const municipalSources = new Set([
-      'Matjhabeng', 'Mangaung', 'Nelson Mandela Bay', 'Buffalo City', 'Sarah Baartman', 'Kouga',
-      'Amathole', 'Masilonyana', 'Mohokare', 'Moqhaka', 'Nketoana', 'Phumelela', 'Cape Town',
-      'West Coast DM', 'Beaufort West', 'Bergrivier', 'Cederberg', 'Laingsburg', 'Langeberg',
-      'Oudtshoorn', 'Overstrand', 'Prince Albert', 'Saldanha Bay', 'Stellenbosch', 'Swartland',
-      'Swellendam'
-    ]);
     const src = (r['Source'] || '').trim();
     const rawSourceUrl = (r['Source URL'] || '').trim();
     const hasSourceUrl = !!rawSourceUrl;
-    const isEtendersSourceUrl = /etenders\.gov\.za/i.test(rawSourceUrl);
-    const isMunicipal = municipalSources.has(src) || (r['Category'] === 'Municipal');
+    const isEtendersSourceUrl = /etenders\.gov\.za/i.test(rawSourceUrl) || /^\/tender(\/|$)/i.test(rawSourceUrl) || /^\/tender-lookup/i.test(rawSourceUrl);
+    const isMunicipal = municipalSourceSet.has(src) || (r['Category'] === 'Municipal');
     // Municipal rows must open municipality source pages, never eTenders lookup pages.
+    const ETENDERS_OPPORTUNITIES_URL = 'https://www.etenders.gov.za/Home/opportunities?id=1';
     const sourceUrl = isMunicipal
-      ? (hasSourceUrl ? rawSourceUrl : '#')
-      : (hasSourceUrl && !isEtendersSourceUrl
-        ? rawSourceUrl
-        : (tenderId
-          ? `/tender/${tenderId}`
-          : (hasSourceUrl && rawSourceUrl.startsWith('/')
-            ? rawSourceUrl
-            : (tenderNumber ? `/tender-lookup?tenderNumber=${encodeURIComponent(tenderNumber)}` : 'https://www.etenders.gov.za/Home/opportunities?id=1'))));
+      ? ((hasSourceUrl && !isEtendersSourceUrl) ? rawSourceUrl : '#')
+      : ETENDERS_OPPORTUNITIES_URL;
     const viewBtn = document.createElement('a');
     viewBtn.href = sourceUrl;
     viewBtn.target = '_blank';
     viewBtn.rel = 'noopener noreferrer';
     viewBtn.className = 'btn primary sm view-source';
-    viewBtn.textContent = isMunicipal ? (hasSourceUrl ? 'View source details' : 'Source unavailable') : 'View on eTenders';
-    if (isMunicipal && !hasSourceUrl) {
+    const municipalHasValidSource = isMunicipal && hasSourceUrl && !isEtendersSourceUrl;
+    viewBtn.textContent = isMunicipal ? (municipalHasValidSource ? 'View source details' : 'Source unavailable') : 'View on eTenders';
+    if (isMunicipal && !municipalHasValidSource) {
       viewBtn.classList.add('btn-disabled');
       viewBtn.addEventListener('click', (e) => e.preventDefault());
       viewBtn.title = 'No municipality source URL available for this row';
@@ -970,35 +992,37 @@ $('employeeGroupForm')?.addEventListener('submit', async (e) => {
     }
   } catch (_) { alert('Failed to add member'); }
 });
-$('searchBtn')?.addEventListener('click', async ()=>{ await runWithBusy('Searching tenders...', async ()=>{ hideDashboard(); filterRows(); }); });
-$('clearBtn')?.addEventListener('click', ()=>{
-  hideDashboard();
-  setSearchValue('');
-  if (qInput) qInput.value = '';
-  if (advRange) advRange.value = 'any';
-  if (provinceSel) provinceSel.value = '';
-  setProvinceRadioValue('');
-  if (organSel) organSel.value = '';
-  if (categorySel) categorySel.value = '';
-  const muniSel = $('municipalScraperSel');
-  if (muniSel) muniSel.value = '';
-  const showAll = $('showAll');
-  const showInterested = $('showInterested');
-  const showReviewed = $('showReviewed');
-  const showTendered = $('showTendered');
-  const showNotInterested = $('showNotInterested');
-  if (showAll) showAll.checked = true;
-  if (showInterested) showInterested.checked = false;
-  if (showReviewed) showReviewed.checked = false;
-  if (showTendered) showTendered.checked = false;
-  if (showNotInterested) showNotInterested.checked = false;
-  municipalScrapeView = null;
-  if (typeof updateMunicipalSearchButtonState === 'function') updateMunicipalSearchButtonState();
-  filterRows();
+$('searchBtn')?.addEventListener('click', async ()=>{ await runWithBusy('Searching tenders...', async ()=>{ hideDashboard(); municipalScrapeView = null; if (provinceSel) provinceSel.value = ''; setProvinceRadioValue(''); const muniSel = $('municipalScraperSel'); if (muniSel) muniSel.value = ''; if (typeof updateMunicipalSearchButtonState === 'function') updateMunicipalSearchButtonState(); filterRows(); }, $('searchBtn'), 'Searching...'); });
+$('clearBtn')?.addEventListener('click', async ()=>{
+  await runWithBusy('Clearing filters...', async ()=>{
+    hideDashboard();
+    setSearchValue('');
+    if (qInput) qInput.value = '';
+    if (advRange) advRange.value = 'any';
+    if (provinceSel) provinceSel.value = '';
+    setProvinceRadioValue('');
+    if (organSel) organSel.value = '';
+    if (categorySel) categorySel.value = '';
+    const muniSel = $('municipalScraperSel');
+    if (muniSel) muniSel.value = '';
+    const showAll = $('showAll');
+    const showInterested = $('showInterested');
+    const showReviewed = $('showReviewed');
+    const showTendered = $('showTendered');
+    const showNotInterested = $('showNotInterested');
+    if (showAll) showAll.checked = true;
+    if (showInterested) showInterested.checked = false;
+    if (showReviewed) showReviewed.checked = false;
+    if (showTendered) showTendered.checked = false;
+    if (showNotInterested) showNotInterested.checked = false;
+    municipalScrapeView = null;
+    if (typeof updateMunicipalSearchButtonState === 'function') updateMunicipalSearchButtonState();
+    filterRows();
+  }, $('clearBtn'), 'Clearing...');
 });
 
 $('customCriteriaBtn')?.addEventListener('click', openCriteriaModal);
-$('searchMyCriteriaBtn')?.addEventListener('click', async ()=>{ await runWithBusy('Searching custom criteria...', async ()=> applySearchMyCriteria()); });
+$('searchMyCriteriaBtn')?.addEventListener('click', async ()=>{ await runWithBusy('Searching custom criteria...', async ()=> applySearchMyCriteria(), $('searchMyCriteriaBtn'), 'Searching...'); });
 
 $('customCriteriaModal')?.querySelector('.modal-backdrop')?.addEventListener('click', closeCriteriaModal);
 $('customCriteriaModal')?.querySelector('.modal-close')?.addEventListener('click', closeCriteriaModal);
@@ -1053,7 +1077,7 @@ function onFilterChange() {
   if (municipalScrapeView) return; // Keep showing municipal data - don't switch to global filter
   clearMunicipalViewAndFilter();
 }
-provinceSel?.addEventListener('change', ()=>{ setProvinceRadioValue(provinceSel.value); loadMunicipalScrapers(provinceSel.value); onFilterChange(); });
+provinceSel?.addEventListener('change', async ()=>{ await runWithBusy('Updating province filters...', async ()=>{ setProvinceRadioValue(provinceSel.value); await loadMunicipalScrapers(provinceSel.value); onFilterChange(); }); });
 organSel?.addEventListener('change', onFilterChange);
 categorySel?.addEventListener('change', onFilterChange);
 if (advRange) advRange.addEventListener('change', onFilterChange);
@@ -1077,7 +1101,7 @@ document.querySelectorAll('input[name="mainMatchMode"]').forEach(r=> r?.addEvent
   };
   [$('showAll'), $('showInterested'), $('showReviewed'), $('showTendered'), $('showNotInterested')].forEach(cb=> cb?.addEventListener('change', onShowChange));
 }
-qInput?.addEventListener('keydown', async (e)=>{ if(e.key==='Enter'){ await runWithBusy('Searching tenders...', async ()=>{ hideDashboard(); filterRows(); }); }});
+qInput?.addEventListener('keydown', async (e)=>{ if(e.key==='Enter'){ await runWithBusy('Searching tenders...', async ()=>{ hideDashboard(); municipalScrapeView = null; if (provinceSel) provinceSel.value = ''; setProvinceRadioValue(''); const muniSel = $('municipalScraperSel'); if (muniSel) muniSel.value = ''; if (typeof updateMunicipalSearchButtonState === 'function') updateMunicipalSearchButtonState(); filterRows(); }, $('searchBtn'), 'Searching...'); }});
 window.addEventListener('resize', () => {
   requestAnimationFrame(resizeGridViewport);
   requestAnimationFrame(syncHeroOffset);
@@ -1095,6 +1119,26 @@ const municipalSourceById = {
   sarahbaartman: 'Sarah Baartman',
   kouga: 'Kouga',
   amathole: 'Amathole',
+  amahlathi: 'Amahlathi',
+  drabxuma: 'Dr AB Xuma',
+  beyersnaude: 'Beyers Naude',
+  elundini: 'Elundini',
+  emalahleni: 'Emalahleni',
+  greatkei: 'Great Kei',
+  ingquzahill: 'Ingquza Hill',
+  intsikayethu: 'Intsika Yethu',
+  inxubayethemba: 'Inxuba Yethemba',
+  joegqabi: 'Joe Gqabi',
+  ksd: 'King Sabata Dalindyebo',
+  koukamma: 'Kou-Kamma',
+  bluecrane: 'Blue Crane Route',
+  mhlontlo: 'Kumkani Mhlontlo',
+  mbhashe: 'Mbhashe',
+  ntabankulu: 'Ntabankulu',
+  sakhisizwe: 'Sakhisizwe',
+  senqu: 'Senqu',
+  nyandeni: 'Nyandeni',
+  ortambo: 'O.R. Tambo',
   masilonyana: 'Masilonyana',
   mohokare: 'Mohokare',
   moqhaka: 'Moqhaka',
@@ -1112,8 +1156,11 @@ const municipalSourceById = {
   princealbert: 'Prince Albert',
   saldanhabay: 'Saldanha Bay',
   stellenbosch: 'Stellenbosch',
+  sundaysrivervalley: 'Sundays River Valley',
+  umzimvubu: 'Umzimvubu',
   swartland: 'Swartland',
-  swellendam: 'Swellendam'
+  swellendam: 'Swellendam',
+  winniemadikizelamandela: 'Winnie Madikizela-Mandela'
 };
 const municipalCsvFallback = [
   'matjhabeng_tenders.csv',
@@ -1123,6 +1170,26 @@ const municipalCsvFallback = [
   'sarahbaartman_tenders.csv',
   'kouga_tenders.csv',
   'amathole_tenders.csv',
+  'amahlathi_tenders.csv',
+  'drabxuma_tenders.csv',
+  'beyersnaude_tenders.csv',
+  'elundini_tenders.csv',
+  'emalahleni_tenders.csv',
+  'greatkei_tenders.csv',
+  'ingquzahill_tenders.csv',
+  'intsikayethu_tenders.csv',
+  'inxubayethemba_tenders.csv',
+  'joegqabi_tenders.csv',
+  'ksd_tenders.csv',
+  'koukamma_tenders.csv',
+  'bluecrane_tenders.csv',
+  'mhlontlo_tenders.csv',
+  'mbhashe_tenders.csv',
+  'ntabankulu_tenders.csv',
+  'sakhisizwe_tenders.csv',
+  'senqu_tenders.csv',
+  'nyandeni_tenders.csv',
+  'ortambo_tenders.csv',
   'masilonyana_tenders.csv',
   'mohokare_tenders.csv',
   'moqhaka_tenders.csv',
@@ -1140,8 +1207,11 @@ const municipalCsvFallback = [
   'princealbert_tenders.csv',
   'saldanhabay_tenders.csv',
   'stellenbosch_tenders.csv',
+  'sundaysrivervalley_tenders.csv',
+  'umzimvubu_tenders.csv',
   'swartland_tenders.csv',
-  'swellendam_tenders.csv'
+  'swellendam_tenders.csv',
+  'winniemadikizelamandela_tenders.csv'
 ];
 const municipalOrgans = Object.values(municipalSourceById);
 const municipalSourceSet = new Set(municipalOrgans);
@@ -1206,20 +1276,16 @@ function runMunicipalScopedSearch() {
   const sourceNameTok = municipalityToken(sourceName);
   const municipalityTok = municipalityToken(municipality);
 
+  // When a municipality is selected, only show rows from our municipal scraped CSVs
+  // (Source matches the municipality). Do NOT include advertised eTenders rows that
+  // merely have matching Organ Of State (e.g. "City of Cape Town").
   const matchesSelectedMunicipality = (r) => {
     if (!municipality) return true;
     const src = String(r['Source'] || '').trim();
-    const organ = String(r['Organ Of State'] || '');
-    const srcLc = src.toLowerCase();
-    const organLc = organ.toLowerCase();
     const srcTok = municipalityToken(src);
-    const organTok = municipalityToken(organ);
     if (src === sourceName) return true;
     if (srcTok === sourceNameTok || srcTok === municipalityTok) return true;
-    if (srcLc.includes(sourceNameLc)) return true;
-    if (organLc.includes(sourceNameLc)) return true;
-    if (sourceNameTok && organTok.includes(sourceNameTok)) return true;
-    if (municipalityTok && organTok.includes(municipalityTok)) return true;
+    if (sourceNameLc && src.toLowerCase().includes(sourceNameLc)) return true;
     return false;
   };
 
@@ -1227,7 +1293,7 @@ function runMunicipalScopedSearch() {
     const src = String(r['Source'] || '').trim();
     const organ = String(r['Organ Of State'] || '');
     const category = String(r['Category'] || '').trim().toLowerCase();
-    const isMunicipal = municipalSourceSet.has(src) || category === 'municipal' || municipalOrgans.some(name => organ.includes(name));
+    const isMunicipal = municipalSourceSet.has(src) || category === 'municipal';
     if (!municipality && !isMunicipal) return false;
     if (selectedProvince && String(r['Province'] || '') !== selectedProvince) return false;
     if (!matchesSelectedMunicipality(r)) return false;
@@ -1251,34 +1317,55 @@ function runMunicipalScopedSearch() {
 
 if (searchMunicipalBtn) {
   searchMunicipalBtn.addEventListener('click', async () => {
-    await runWithBusy('Searching municipality tenders...', async ()=> runMunicipalScopedSearch());
+    const municipality = municipalScraperSel?.value;
+    if (!municipality) return;
+    const prevMsg = updateMsg?.textContent || '';
+    const selectedName = municipalScraperSel?.selectedOptions?.[0]?.textContent || municipality;
+    setButtonLoading(searchMunicipalBtn, true, 'Scraping...');
+    showLoading(`Scraping ${selectedName}...`);
+    try {
+      runMunicipalScopedSearch();
+    } finally {
+      setButtonLoading(searchMunicipalBtn, false);
+      hideLoading();
+      searchMunicipalBtn.disabled = !municipality;
+      setTimeout(() => { if (updateMsg) updateMsg.textContent = prevMsg; }, 8000);
+    }
   });
 }
 updateMunicipalSearchButtonState();
 
 if (updateBtn) {
   updateBtn.addEventListener('click', async () => {
-    updateBtn.disabled = true; updateMsg.textContent = 'Checking for updates...';
-    await runWithBusy('Updating latest sources...', async () => {
-      try {
-        const res = await fetch('/api/update');
-        const data = await res.json();
-        if (res.ok) {
-          updateMsg.textContent = data.message || `${data.added} new record(s) added`;
-          // reload dataset if we added anything (use returned csv or refetch)
-          if (data.added > 0 && !data.readOnly) {
-            const csvText = data.csv || (await (await fetch('/data/advertised_tenders.csv')).text());
-            Papa.parse(csvText,{header:true,skipEmptyLines:true,complete:({data})=>{ rows=data; buildFilters(rows); filterRows(); }});
-          }
-        } else {
-          updateMsg.textContent = data.error || 'Update failed';
+    setButtonLoading(updateBtn, true, 'Updating...');
+    showLoading('Checking for updates...');
+    try {
+      const res = await fetch('/api/update');
+      const data = await res.json();
+      if (res.ok) {
+        updateMsg.textContent = data.message || `${data.added} new record(s) added`;
+        if (data.added > 0 && !data.readOnly) {
+          const csvText = data.csv || (await (await fetch('/data/advertised_tenders.csv')).text());
+          Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            complete: ({ data }) => {
+              rows = data;
+              buildFilters(rows);
+              filterRows();
+            }
+          });
         }
-      } catch (e) {
-        updateMsg.textContent = 'Update failed';
-      } finally {
-        updateBtn.disabled = false;
+      } else {
+        updateMsg.textContent = data.error || 'Update failed';
       }
-    });
+    } catch (e) {
+      updateMsg.textContent = 'Update failed';
+    } finally {
+      setButtonLoading(updateBtn, false);
+      hideLoading();
+      setTimeout(() => { if (updateMsg) updateMsg.textContent = ''; }, 5000);
+    }
   });
 }
 
@@ -1318,6 +1405,8 @@ if (installBtn) {
 }
 
 (async function init(){
+  showLoading('Loading tender data...');
+  try {
   let adv = [];
   try {
     adv = await loadCsv(advertisedCsvUrl);
@@ -1415,4 +1504,10 @@ if (installBtn) {
   resizeGridViewport();
   renderCustomCriteriaSummary();
   filterRows();
+  } catch (error) {
+    console.error('Failed to load data:', error);
+    if (stats) stats.textContent = 'Error loading data';
+  } finally {
+    hideLoading();
+  }
 })();

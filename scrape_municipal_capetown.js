@@ -6,7 +6,6 @@ const CFG = {
   organOfState: 'City of Cape Town',
   place: 'Cape Town',
   baseUrl: 'https://web1.capetown.gov.za',
-  forceSourceUrl: 'https://web1.capetown.gov.za/web1/tenderportal/Tender',
   urls: ['https://web1.capetown.gov.za/web1/tenderportal/Tender'],
   csvFilename: 'capetown_tenders.csv',
   linkSelector: 'a[href], tr td',

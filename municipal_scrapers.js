@@ -58,7 +58,8 @@ const SCRAPERS = {
     module: './scrape_municipal_kouga',
     csvFilename: 'kouga_tenders.csv',
     defaultLimit: 500,
-    htmlOnly: true
+    htmlOnly: true,
+    forceSourceUrl: 'https://www.kouga.gov.za/tenders'
   },
   amathole: {
     id: 'amathole',
@@ -68,6 +69,205 @@ const SCRAPERS = {
     csvFilename: 'amathole_tenders.csv',
     defaultLimit: 500,
     htmlOnly: true
+  },
+  amahlathi: {
+    id: 'amahlathi',
+    name: 'Amahlathi Local Municipality',
+    shortName: 'Amahlathi',
+    module: './scrape_municipal_amahlathi',
+    csvFilename: 'amahlathi_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://amahlathi.gov.za/tenders-rfqs/'
+  },
+  drabxuma: {
+    id: 'drabxuma',
+    name: 'Dr AB Xuma Local Municipality',
+    shortName: 'Dr AB Xuma',
+    module: './scrape_municipal_drabxuma',
+    csvFilename: 'drabxuma_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://drabxumalm.gov.za/tenders/'
+  },
+  beyersnaude: {
+    id: 'beyersnaude',
+    name: 'Beyers Naude Local Municipality',
+    shortName: 'Beyers Naude',
+    module: './scrape_municipal_beyersnaude',
+    csvFilename: 'beyersnaude_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://bnlm.gov.za/documents/tenders/'
+  },
+  elundini: {
+    id: 'elundini',
+    name: 'Elundini Local Municipality',
+    shortName: 'Elundini',
+    module: './scrape_municipal_elundini',
+    csvFilename: 'elundini_tenders.csv',
+    defaultLimit: 50,
+    htmlOnly: true,
+    forceSourceUrl: 'https://elundini.gov.za/category/supplychain/tenders/'
+  },
+  emalahleni: {
+    id: 'emalahleni',
+    name: 'Emalahleni Local Municipality',
+    shortName: 'Emalahleni',
+    module: './scrape_municipal_emalahleni',
+    csvFilename: 'emalahleni_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://emalahleni.gov.za/v2/elm-business/tenders'
+  },
+  greatkei: {
+    id: 'greatkei',
+    name: 'Great Kei Municipality',
+    shortName: 'Great Kei',
+    module: './scrape_municipal_greatkei',
+    csvFilename: 'greatkei_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://greatkeilm.gov.za/web/category/tenders/open-tenders/'
+  },
+  ingquzahill: {
+    id: 'ingquzahill',
+    name: 'Ingquza Hill Local Municipality',
+    shortName: 'Ingquza Hill',
+    module: './scrape_municipal_ingquzahill',
+    csvFilename: 'ingquzahill_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://www.ihlm.gov.za/tenders/'
+  },
+  intsikayethu: {
+    id: 'intsikayethu',
+    name: 'Intsika Yethu Local Municipality',
+    shortName: 'Intsika Yethu',
+    module: './scrape_municipal_intsikayethu',
+    csvFilename: 'intsikayethu_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://intsikayethu.gov.za/cat_doc/tenders/'
+  },
+  inxubayethemba: {
+    id: 'inxubayethemba',
+    name: 'Inxuba Yethemba Local Municipality',
+    shortName: 'Inxuba Yethemba',
+    module: './scrape_municipal_inxubayethemba',
+    csvFilename: 'inxubayethemba_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://iym.gov.za/index.php/notices/tender-advertisements/'
+  },
+  joegqabi: {
+    id: 'joegqabi',
+    name: 'Joe Gqabi District Municipality',
+    shortName: 'Joe Gqabi',
+    module: './scrape_municipal_joegqabi',
+    csvFilename: 'joegqabi_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://jgdm.gov.za/tenders/tender-quotation-advertisements/'
+  },
+  ksd: {
+    id: 'ksd',
+    name: 'King Sabata Dalindyebo Local Municipality',
+    shortName: 'King Sabata Dalindyebo',
+    module: './scrape_municipal_ksd',
+    csvFilename: 'ksd_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://ksd.gov.za/procurements/tenders/'
+  },
+  koukamma: {
+    id: 'koukamma',
+    name: 'Kou-Kamma Local Municipality',
+    shortName: 'Kou-Kamma',
+    module: './scrape_municipal_koukamma',
+    csvFilename: 'koukamma_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://koukammamunicipality.gov.za/tenders-and-rfq/'
+  },
+  bluecrane: {
+    id: 'bluecrane',
+    name: 'Blue Crane Route Municipality',
+    shortName: 'Blue Crane Route',
+    module: './scrape_municipal_bluecrane',
+    csvFilename: 'bluecrane_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: false
+  },
+  mhlontlo: {
+    id: 'mhlontlo',
+    name: 'Kumkani Mhlontlo Local Municipality',
+    shortName: 'Kumkani Mhlontlo',
+    module: './scrape_municipal_mhlontlo',
+    csvFilename: 'mhlontlo_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: false,
+    forceSourceUrl: 'https://mhlontlolm.gov.za/current-tenders/'
+  },
+  mbhashe: {
+    id: 'mbhashe',
+    name: 'Mbhashe Local Municipality',
+    shortName: 'Mbhashe',
+    module: './scrape_municipal_mbhashe',
+    csvFilename: 'mbhashe_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://mbhashemun.gov.za/procurement/tenders/'
+  },
+  ntabankulu: {
+    id: 'ntabankulu',
+    name: 'Ntabankulu Local Municipality',
+    shortName: 'Ntabankulu',
+    module: './scrape_municipal_ntabankulu',
+    csvFilename: 'ntabankulu_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://ntabankulu.gov.za/category/tenders/open-tenders/'
+  },
+  senqu: {
+    id: 'senqu',
+    name: 'Senqu Local Municipality',
+    shortName: 'Senqu',
+    module: './scrape_municipal_senqu',
+    csvFilename: 'senqu_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://senqu.gov.za/formal-tenders-2025-2026/'
+  },
+  sakhisizwe: {
+    id: 'sakhisizwe',
+    name: 'Sakhisizwe Local Municipality',
+    shortName: 'Sakhisizwe',
+    module: './scrape_municipal_sakhisizwe',
+    csvFilename: 'sakhisizwe_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://slm.gov.za/supply-chain-management/tenders/'
+  },
+  nyandeni: {
+    id: 'nyandeni',
+    name: 'Nyandeni Local Municipality',
+    shortName: 'Nyandeni',
+    module: './scrape_municipal_nyandeni',
+    csvFilename: 'nyandeni_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://nyandenilm.gov.za/tenders-index'
+  },
+  ortambo: {
+    id: 'ortambo',
+    name: 'O.R. Tambo District Municipality',
+    shortName: 'O.R. Tambo',
+    module: './scrape_municipal_ortambo',
+    csvFilename: 'ortambo_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://ortambodm.gov.za/tenders/'
   },
   masilonyana: {
     id: 'masilonyana',
@@ -121,7 +321,8 @@ const SCRAPERS = {
     module: './scrape_municipal_capetown',
     csvFilename: 'capetown_tenders.csv',
     defaultLimit: 500,
-    htmlOnly: true
+    htmlOnly: true,
+    forceSourceUrl: 'https://web1.capetown.gov.za/web1/tenderportal/Tender'
   },
   westcoastdm: {
     id: 'westcoastdm',
@@ -222,6 +423,26 @@ const SCRAPERS = {
     defaultLimit: 500,
     htmlOnly: true
   },
+  sundaysrivervalley: {
+    id: 'sundaysrivervalley',
+    name: 'Sundays River Valley Local Municipality',
+    shortName: 'Sundays River Valley',
+    module: './scrape_municipal_sundaysrivervalley',
+    csvFilename: 'sundaysrivervalley_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://srvm.gov.za/tenders/'
+  },
+  umzimvubu: {
+    id: 'umzimvubu',
+    name: 'Umzimvubu Local Municipality',
+    shortName: 'Umzimvubu',
+    module: './scrape_municipal_umzimvubu',
+    csvFilename: 'umzimvubu_tenders.csv',
+    defaultLimit: 100,
+    htmlOnly: false,
+    forceSourceUrl: 'https://umzimvubu.gov.za/rfq-adverts/'
+  },
   swartland: {
     id: 'swartland',
     name: 'Swartland Municipality',
@@ -239,6 +460,16 @@ const SCRAPERS = {
     csvFilename: 'swellendam_tenders.csv',
     defaultLimit: 45,
     htmlOnly: true
+  },
+  winniemadikizelamandela: {
+    id: 'winniemadikizelamandela',
+    name: 'Winnie Madikizela-Mandela Local Municipality',
+    shortName: 'Winnie Madikizela-Mandela',
+    module: './scrape_municipal_winniemadikizelamandela',
+    csvFilename: 'winniemadikizelamandela_tenders.csv',
+    defaultLimit: 500,
+    htmlOnly: true,
+    forceSourceUrl: 'https://winniemmlm.gov.za/tenders/'
   }
 };
 

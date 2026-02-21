@@ -19,6 +19,7 @@ app.use((req, res, next) => { console.log(`📨 ${req.method} ${req.url}`); next
 const IS_SERVERLESS = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
 const TMP_CSV = '/tmp/advertised_tenders.csv';
 const TMP_ETENDER_GOV = '/tmp/etender_gov_data.csv';
+const ETENDERS_OPPORTUNITIES_URL = 'https://etenders.gov.za/Home/opportunities?id=1';
 const TMP_FLAGS = '/tmp/flags.json';
 const TMP_EMPLOYEES = '/tmp/employees.json';
 const EMPLOYEES_FILENAME = 'employees.json';
@@ -49,6 +50,26 @@ const DEFAULT_PROVINCE_BY_ID = new Map([
 	['sarahbaartman', 'Eastern Cape'],
 	['kouga', 'Eastern Cape'],
 	['amathole', 'Eastern Cape'],
+	['amahlathi', 'Eastern Cape'],
+	['drabxuma', 'Eastern Cape'],
+	['beyersnaude', 'Eastern Cape'],
+	['elundini', 'Eastern Cape'],
+	['emalahleni', 'Mpumalanga'],
+	['greatkei', 'Eastern Cape'],
+	['ingquzahill', 'Eastern Cape'],
+	['intsikayethu', 'Eastern Cape'],
+	['inxubayethemba', 'Eastern Cape'],
+	['joegqabi', 'Eastern Cape'],
+	['ksd', 'Eastern Cape'],
+	['koukamma', 'Eastern Cape'],
+	['bluecrane', 'Eastern Cape'],
+	['mhlontlo', 'Eastern Cape'],
+	['mbhashe', 'Eastern Cape'],
+	['ntabankulu', 'Eastern Cape'],
+	['sakhisizwe', 'Eastern Cape'],
+	['senqu', 'Eastern Cape'],
+	['nyandeni', 'Eastern Cape'],
+	['ortambo', 'Eastern Cape'],
 	['capetown', 'Western Cape'],
 	['westcoastdm', 'Western Cape'],
 	['beaufortwest', 'Western Cape'],
@@ -61,8 +82,11 @@ const DEFAULT_PROVINCE_BY_ID = new Map([
 	['princealbert', 'Western Cape'],
 	['saldanhabay', 'Western Cape'],
 	['stellenbosch', 'Western Cape'],
+	['sundaysrivervalley', 'Eastern Cape'],
+	['umzimvubu', 'Eastern Cape'],
 	['swartland', 'Western Cape'],
-	['swellendam', 'Western Cape']
+	['swellendam', 'Western Cape'],
+	['winniemadikizelamandela', 'Eastern Cape']
 ]);
 
 app.use(express.json());
@@ -225,11 +249,11 @@ function parseIsoDateTimeToCsv(value) {
 }
 
 async function fetchAdvertisedAll() {
-	const baseUrl = 'https://www.etenders.gov.za/Home/PaginatedTenderOpportunities';
+	const baseUrl = 'https://etenders.gov.za/Home/PaginatedTenderOpportunities';
 	const headers = {
 		'User-Agent': 'Mozilla/5.0',
 		'X-Requested-With': 'XMLHttpRequest',
-		'Referer': 'https://www.etenders.gov.za/Home/opportunities?id=1'
+		'Referer': ETENDERS_OPPORTUNITIES_URL
 	};
 	let start = 0;
 	const length = 200;
@@ -243,7 +267,7 @@ async function fetchAdvertisedAll() {
 		if (typeof data.recordsTotal === 'number' && start >= data.recordsTotal) break;
 		if (start > 5000) break; // safety cap
 	}
-	const baseSourceUrl = 'https://www.etenders.gov.za/Home/opportunities?id=1';
+	const baseSourceUrl = ETENDERS_OPPORTUNITIES_URL;
 	return all.map(r => {
 		const id = r.id;
 		const tenderNumber = r.tender_No || '';
@@ -486,11 +510,11 @@ async function saveFlag(tenderNumber, data) {
 app.get('/tender-lookup', async (req, res) => {
 	const tenderNumber = (req.query.tenderNumber || '').trim();
 	if (!tenderNumber) return res.status(400).send('tenderNumber required');
-	const baseUrl = 'https://www.etenders.gov.za/Home/PaginatedTenderOpportunities';
+	const baseUrl = 'https://etenders.gov.za/Home/PaginatedTenderOpportunities';
 	const headers = {
 		'User-Agent': 'Mozilla/5.0',
 		'X-Requested-With': 'XMLHttpRequest',
-		'Referer': 'https://www.etenders.gov.za/Home/opportunities?id=1'
+		'Referer': ETENDERS_OPPORTUNITIES_URL
 	};
 	const normalize = (s) => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
 	const want = normalize(tenderNumber);
@@ -521,7 +545,7 @@ a{color:#00e5a8}a:hover{text-decoration:underline}.btn{display:inline-block;back
 </style></head><body>
 <h1>Tender not found</h1>
 <p>Could not find tender "${tenderNumber.replace(/</g,'&lt;')}" on eTenders. It may have been closed, cancelled, or removed.</p>
-<a href="https://www.etenders.gov.za/Home/opportunities?id=1" class="btn" target="_blank">Open eTenders portal</a>
+<a href="${ETENDERS_OPPORTUNITIES_URL}" class="btn" target="_blank">Open eTenders portal</a>
 <p style="margin-top:24px"><a href="/">← Back to Explorer</a></p>
 </body></html>`;
 	res.type('html').send(html);
@@ -531,11 +555,11 @@ a{color:#00e5a8}a:hover{text-decoration:underline}.btn{display:inline-block;back
 app.get('/tender/:id', async (req, res) => {
 	try {
 		const id = req.params.id;
-		const { data } = await axios.get(`https://www.etenders.gov.za/Home/TenderDetails/${id}`, {
+		const { data } = await axios.get(`https://etenders.gov.za/Home/TenderDetails/${id}`, {
 			headers: {
 				'User-Agent': 'Mozilla/5.0',
 				'X-Requested-With': 'XMLHttpRequest',
-				'Referer': 'https://www.etenders.gov.za/Home/opportunities?id=1'
+				'Referer': ETENDERS_OPPORTUNITIES_URL
 			}
 		});
 		const tenders = Array.isArray(data) ? data : (data && data.data ? data.data : [data]);
@@ -546,7 +570,7 @@ app.get('/tender/:id', async (req, res) => {
 			const blob = (d.supportDocumentID || '') + (d.extension || '.pdf');
 			return {
 				name: d.fileName || 'document',
-				url: `https://www.etenders.gov.za/Home/Download/?blobName=${encodeURIComponent(blob)}&downloadedFileName=${encodeURIComponent(d.fileName || 'document.pdf')}`
+				url: `https://etenders.gov.za/Home/Download/?blobName=${encodeURIComponent(blob)}&downloadedFileName=${encodeURIComponent(d.fileName || 'document.pdf')}`
 			};
 		});
 		const html = `<!DOCTYPE html>
@@ -601,7 +625,7 @@ ${docs.map(d => `<li><a href="${d.url}" target="_blank" rel="noopener">${d.name}
 </ul>
 </div>
 ` : ''}
-<a href="https://www.etenders.gov.za/Home/opportunities?id=1" target="_blank" rel="noopener" class="btn">Open full eTenders portal</a>
+<a href="${ETENDERS_OPPORTUNITIES_URL}" target="_blank" rel="noopener" class="btn">Open full eTenders portal</a>
 </div>
 </body>
 </html>`;
@@ -725,6 +749,24 @@ const municipalScrapers = {
 	sarahbaartman: require('./scrape_municipal_sarahbaartman'),
 	kouga: require('./scrape_municipal_kouga'),
 	amathole: require('./scrape_municipal_amathole'),
+	amahlathi: require('./scrape_municipal_amahlathi'),
+	drabxuma: require('./scrape_municipal_drabxuma'),
+	beyersnaude: require('./scrape_municipal_beyersnaude'),
+	elundini: require('./scrape_municipal_elundini'),
+	emalahleni: require('./scrape_municipal_emalahleni'),
+	greatkei: require('./scrape_municipal_greatkei'),
+	ingquzahill: require('./scrape_municipal_ingquzahill'),
+	intsikayethu: require('./scrape_municipal_intsikayethu'),
+	inxubayethemba: require('./scrape_municipal_inxubayethemba'),
+	joegqabi: require('./scrape_municipal_joegqabi'),
+	ksd: require('./scrape_municipal_ksd'),
+	koukamma: require('./scrape_municipal_koukamma'),
+	bluecrane: require('./scrape_municipal_bluecrane'),
+	mhlontlo: require('./scrape_municipal_mhlontlo'),
+	mbhashe: require('./scrape_municipal_mbhashe'),
+	ntabankulu: require('./scrape_municipal_ntabankulu'),
+	nyandeni: require('./scrape_municipal_nyandeni'),
+	ortambo: require('./scrape_municipal_ortambo'),
 	masilonyana: require('./scrape_municipal_masilonyana'),
 	mohokare: require('./scrape_municipal_mohokare'),
 	moqhaka: require('./scrape_municipal_moqhaka'),
@@ -743,7 +785,8 @@ const municipalScrapers = {
 	saldanhabay: require('./scrape_municipal_saldanhabay'),
 	stellenbosch: require('./scrape_municipal_stellenbosch'),
 	swartland: require('./scrape_municipal_swartland'),
-	swellendam: require('./scrape_municipal_swellendam')
+	swellendam: require('./scrape_municipal_swellendam'),
+	winniemadikizelamandela: require('./scrape_municipal_winniemadikizelamandela')
 };
 
 app.post('/api/scrape/municipal', async (req, res) => {
@@ -808,14 +851,6 @@ if (require.main === module) {
 	app.listen(PORT, () => {
 		console.log(`Web app running on http://localhost:${PORT}`);
 		console.log(`  Open the URL above in your browser.`);
-		// Open browser after a short delay (only when run directly)
-		setTimeout(() => {
-			try {
-				const url = `http://localhost:${PORT}`;
-				const cmd = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
-				require('child_process').spawn(cmd, [url], { shell: true, stdio: 'ignore' });
-			} catch (_) {}
-		}, 1500);
 	});
 }
 
