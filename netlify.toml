@@ -1,15 +1,16 @@
 [build]
   functions = "netlify/functions"
   publish = "web"
-  command = "node -e \"const fs=require('fs'); fs.mkdirSync('web/data',{recursive:true}); fs.mkdirSync('web/assets',{recursive:true}); fs.copyFileSync('advertised_tenders.csv','web/data/advertised_tenders.csv'); if(fs.existsSync('ai_opportunities.csv')) fs.copyFileSync('ai_opportunities.csv','web/data/ai_opportunities.csv'); const p192=fs.existsSync('public/proper192.png')?'public/proper192.png':(fs.existsSync('public/PROPER192.png')?'public/PROPER192.png':null); const p512=fs.existsSync('public/proper512.png')?'public/proper512.png':(fs.existsSync('public/PROPER512.png')?'public/PROPER512.png':null); if(p192) fs.copyFileSync(p192,'web/assets/proper192.png'); if(p512) fs.copyFileSync(p512,'web/assets/proper512.png');\""
+  command = "node scripts/generate_etender_gov_data.js && node -e \"const fs=require('fs'); fs.mkdirSync('web/data',{recursive:true}); fs.mkdirSync('web/assets',{recursive:true}); fs.copyFileSync('advertised_tenders.csv','web/data/advertised_tenders.csv'); if(fs.existsSync('etender_gov_data.csv')) fs.copyFileSync('etender_gov_data.csv','web/data/etender_gov_data.csv'); if(fs.existsSync('ai_opportunities.csv')) fs.copyFileSync('ai_opportunities.csv','web/data/ai_opportunities.csv'); ['matjhabeng_tenders.csv','mangaung_tenders.csv','nelsonmandelabay_tenders.csv','buffalocity_tenders.csv','sarahbaartman_tenders.csv','kouga_tenders.csv','amathole_tenders.csv','masilonyana_tenders.csv','mohokare_tenders.csv','moqhaka_tenders.csv','nketoana_tenders.csv','phumelela_tenders.csv'].forEach(f=>{if(fs.existsSync(f))fs.copyFileSync(f,'web/data/'+f)}); const p192=fs.existsSync('public/proper192.png')?'public/proper192.png':(fs.existsSync('public/PROPER192.png')?'public/PROPER192.png':null); const p512=fs.existsSync('public/proper512.png')?'public/proper512.png':(fs.existsSync('public/PROPER512.png')?'public/PROPER512.png':null); if(p192) fs.copyFileSync(p192,'web/assets/proper192.png'); if(p512) fs.copyFileSync(p512,'web/assets/proper512.png');\""
 
 [functions]
-  included_files = ["./advertised_tenders.csv", "./ai_opportunities.csv"]
+  included_files = ["./advertised_tenders.csv", "./ai_opportunities.csv", "./lib", "./scrape_municipal_matjhabeng.js", "./scrape_municipal_mangaung.js", "./scrape_municipal_nelsonmandelabay.js", "./scrape_municipal_buffalocity.js", "./scrape_municipal_sarahbaartman.js", "./scrape_municipal_kouga.js", "./scrape_municipal_amathole.js", "./scrape_municipal_masilonyana.js", "./scrape_municipal_mohokare.js", "./scrape_municipal_moqhaka.js", "./scrape_municipal_nketoana.js", "./scrape_municipal_phumelela.js", "./municipal_scrapers.js"]
 
 # Serve static files from CDN; only proxy API and dynamic routes to the serverless function
+# Use :splat to preserve path so Express can route /api/scrape/municipal etc.
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/server"
+  to = "/.netlify/functions/server/api/:splat"
   status = 200
   force = true
 

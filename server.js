@@ -1,4 +1,6 @@
+require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
@@ -6,21 +8,42 @@ const { parse } = require('csv-parse/sync');
 const { stringify } = require('csv-stringify/sync');
 
 const app = express();
-const PORT = process.env.PORT || 5173;
+const PORT = process.env.PORT || 3000;
+
+app.use(cors({ origin: true, credentials: true })); // Allow same-origin; CORS for any origin in dev
+app.use((req, res, next) => { console.log(`📨 ${req.method} ${req.url}`); next(); });
 
 // Serverless (Netlify, Lambda, etc.): filesystem is read-only except /tmp - ALWAYS use /tmp explicitly
 const IS_SERVERLESS = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
 const TMP_CSV = '/tmp/advertised_tenders.csv';
+const TMP_ETENDER_GOV = '/tmp/etender_gov_data.csv';
 const TMP_FLAGS = '/tmp/flags.json';
+const TMP_EMPLOYEES = '/tmp/employees.json';
+const EMPLOYEES_FILENAME = 'employees.json';
 const CSV_FILENAME = 'advertised_tenders.csv';
+const ETENDER_GOV_FILENAME = 'etender_gov_data.csv';
 const FLAGS_FILENAME = 'flags.json';
 
 app.use(express.json());
+// Netlify rewrites /api/* to /.netlify/functions/server/api/:splat - normalize so /api/* routes match
+app.use((req, res, next) => {
+	if (req.path.startsWith('/.netlify/functions/server/api/')) {
+		req.url = req.url.replace('/.netlify/functions/server', '') || '/';
+	}
+	next();
+});
 app.use(express.static(path.join(__dirname, 'web')));
 
 // Serve advertised_tenders.csv - /tmp if updated (serverless), else project root (local)
 app.get('/data/advertised_tenders.csv', (req, res) => {
 	const p = (IS_SERVERLESS && fs.existsSync(TMP_CSV)) ? TMP_CSV : path.join(__dirname, CSV_FILENAME);
+	res.type('text/csv').sendFile(path.resolve(p));
+});
+
+// Serve etender_gov_data.csv - eTenders.gov.za numbers + descriptions only (no municipal data)
+app.get('/data/etender_gov_data.csv', (req, res) => {
+	const p = (IS_SERVERLESS && fs.existsSync(TMP_ETENDER_GOV)) ? TMP_ETENDER_GOV : path.join(__dirname, ETENDER_GOV_FILENAME);
+	if (!fs.existsSync(p)) return res.status(404).send('etender_gov_data.csv not found');
 	res.type('text/csv').sendFile(path.resolve(p));
 });
 
@@ -154,6 +177,11 @@ app.get('/api/update', async (req, res) => {
 			}))];
 			const csv = stringify(merged, { header: true });
 			fs.writeFileSync(TMP_CSV, csv);
+			// Write etender_gov_data.csv (numbers + descriptions only, eTenders.gov.za data)
+			const govRows = merged.map(r => ({ 'Tender Number': r['Tender Number'] || '', 'Tender Description': r['Tender Description'] || '' }));
+			const govCsv = stringify(govRows, { header: true });
+			const govPath = IS_SERVERLESS ? TMP_ETENDER_GOV : path.join(__dirname, ETENDER_GOV_FILENAME);
+			fs.writeFileSync(govPath, govCsv);
 			// Return CSV in response so frontend can use it (CDN serves static file, not updated)
 			return res.json({ added, lastAdvertised: formatDate(lastMax), csv });
 		}
@@ -163,10 +191,15 @@ app.get('/api/update', async (req, res) => {
 	}
 });
 
-// Tiny backend store for card flags (reviewed/tendered)
+// Flags: Supabase (when configured) or JSON file fallback
 const FLAGS_PATH = IS_SERVERLESS ? TMP_FLAGS : path.join(__dirname, FLAGS_FILENAME);
+const supabase = require('./lib/supabase');
 
-function loadFlags() {
+async function loadFlags() {
+	if (supabase.isEnabled()) {
+		const fromDb = await supabase.getAllFlags();
+		if (fromDb !== null) return fromDb;
+	}
 	try {
 		if (fs.existsSync(FLAGS_PATH)) {
 			const raw = fs.readFileSync(FLAGS_PATH, 'utf8');
@@ -176,12 +209,18 @@ function loadFlags() {
 	return {};
 }
 
-function saveFlags(obj) {
+async function saveFlag(tenderNumber, data) {
+	if (supabase.isEnabled()) {
+		const ok = await supabase.upsertFlag(tenderNumber, data);
+		if (ok) return true;
+	}
 	try {
-		fs.writeFileSync(FLAGS_PATH, JSON.stringify(obj, null, 2));
+		const flags = await loadFlags();
+		flags[tenderNumber] = data;
+		fs.writeFileSync(FLAGS_PATH, JSON.stringify(flags, null, 2));
 		return true;
 	} catch (e) {
-		if (e.code === 'EROFS') return true; // client uses localStorage as fallback
+		if (e.code === 'EROFS') return true;
 		return false;
 	}
 }
@@ -315,30 +354,171 @@ ${docs.map(d => `<li><a href="${d.url}" target="_blank" rel="noopener">${d.name}
 	}
 });
 
-app.get('/api/flags', (req, res) => {
-	const flags = loadFlags();
+app.get('/api/flags', async (req, res) => {
+	const flags = await loadFlags();
 	res.json(flags);
 });
 
-app.post('/api/flags', (req, res) => {
-	const { tenderNumber, interested, reviewed, tendered, notInterested, comment } = req.body || {};
+// Employee group: Supabase or JSON file fallback
+const EMPLOYEES_PATH = IS_SERVERLESS ? TMP_EMPLOYEES : path.join(__dirname, EMPLOYEES_FILENAME);
+
+async function loadEmployees() {
+	if (supabase.isEnabled()) {
+		const fromDb = await supabase.getAllEmployees();
+		if (fromDb !== null) return fromDb;
+	}
+	try {
+		if (fs.existsSync(EMPLOYEES_PATH)) {
+			const raw = fs.readFileSync(EMPLOYEES_PATH, 'utf8');
+			return JSON.parse(raw);
+		}
+	} catch (e) {}
+	return [];
+}
+
+async function saveEmployee(emp) {
+	if (supabase.isEnabled()) {
+		const added = await supabase.addEmployee(emp);
+		if (added) return added;
+	}
+	try {
+		const list = await loadEmployees();
+		const id = 'emp_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+		const row = { id, name: emp.name || '', email: (emp.email || '').trim().toLowerCase(), phone: emp.phone || '', employeeNumber: emp.employeeNumber || '' };
+		list.push(row);
+		fs.writeFileSync(EMPLOYEES_PATH, JSON.stringify(list, null, 2));
+		return row;
+	} catch (e) {
+		if (e.code === 'EROFS') return { id: 'local', ...emp };
+		return null;
+	}
+}
+
+async function removeEmployee(id) {
+	if (supabase.isEnabled()) {
+		const ok = await supabase.deleteEmployee(id);
+		if (ok) return true;
+	}
+	try {
+		const list = await loadEmployees();
+		const filtered = list.filter(e => e.id !== id);
+		if (filtered.length === list.length) return false;
+		fs.writeFileSync(EMPLOYEES_PATH, JSON.stringify(filtered, null, 2));
+		return true;
+	} catch (e) {
+		return false;
+	}
+}
+
+app.get('/api/employees', async (req, res) => {
+	try {
+		const list = await loadEmployees();
+		res.json(list);
+	} catch (e) {
+		res.status(500).json({ error: e.message });
+	}
+});
+
+app.post('/api/employees', async (req, res) => {
+	const { name, email, phone, employeeNumber } = req.body || {};
+	if (!name || !email) return res.status(400).json({ error: 'Name and email required' });
+	const added = await saveEmployee({ name, email, phone, employeeNumber });
+	if (!added) return res.status(500).json({ error: 'Failed to add member' });
+	res.json(added);
+});
+
+app.delete('/api/employees/:id', async (req, res) => {
+	const id = req.params.id;
+	if (!id) return res.status(400).json({ error: 'id required' });
+	const ok = await removeEmployee(id);
+	if (!ok) return res.status(404).json({ error: 'Member not found' });
+	res.json({ ok: true });
+});
+
+// Municipal scrapers - routes to correct scraper by municipality id
+app.get('/api/scrape/municipal/list', (req, res) => {
+	const { listScrapers } = require('./municipal_scrapers');
+	res.json({ ok: true, scrapers: listScrapers() });
+});
+
+// Explicit scraper map - no dynamic require, avoids cache returning wrong scraper
+const municipalScrapers = {
+	matjhabeng: require('./scrape_municipal_matjhabeng'),
+	mangaung: require('./scrape_municipal_mangaung'),
+	nelsonmandelabay: require('./scrape_municipal_nelsonmandelabay'),
+	buffalocity: require('./scrape_municipal_buffalocity'),
+	sarahbaartman: require('./scrape_municipal_sarahbaartman'),
+	kouga: require('./scrape_municipal_kouga'),
+	amathole: require('./scrape_municipal_amathole'),
+	masilonyana: require('./scrape_municipal_masilonyana'),
+	mohokare: require('./scrape_municipal_mohokare'),
+	moqhaka: require('./scrape_municipal_moqhaka'),
+	nketoana: require('./scrape_municipal_nketoana'),
+	phumelela: require('./scrape_municipal_phumelela')
+};
+
+app.post('/api/scrape/municipal', async (req, res) => {
+	try {
+		const municipality = req.query.municipality || req.body?.municipality;
+		if (!municipality) {
+			return res.status(400).json({ ok: false, error: 'municipality parameter required' });
+		}
+		const { getScraper } = require('./municipal_scrapers');
+		const config = getScraper(municipality);
+		if (!config) {
+			return res.status(400).json({ ok: false, error: `Unknown municipality: ${municipality}` });
+		}
+		const scraper = municipalScrapers[municipality];
+		if (!scraper || !scraper.runScraper) {
+			return res.status(500).json({ ok: false, error: `No scraper for ${municipality}` });
+		}
+		const htmlOnly = req.query.htmlOnly === 'true' || req.body?.htmlOnly === true || config.htmlOnly;
+		const limit = parseInt(req.query.limit || req.body?.limit || config.defaultLimit, 10) || config.defaultLimit;
+		const outDir = IS_SERVERLESS ? '/tmp' : __dirname;
+		const csvFilename = config.csvFilename || `${config.id}_tenders.csv`;
+		console.log(`📥 Scrape request: municipality=${municipality} -> ${config.shortName}, limit=${limit}`);
+		const { rows, data, message } = await scraper.runScraper({ htmlOnly, limit, outDir, csvFilename });
+		const resultData = data || [];
+		const expectedSource = config.shortName;
+		const bad = resultData.filter(r => ((r && r.Source) || '').trim() !== expectedSource);
+		if (bad.length > 0) {
+			console.error(`❌ Scraper returned wrong Source: expected ${expectedSource}, got`, bad[0]?.Source, '- rejecting');
+			return res.status(500).json({ ok: false, error: `Scraper returned wrong data (expected ${expectedSource}, got ${bad[0]?.Source})` });
+		}
+		console.log(`✅ ${config.shortName}: ${message}`);
+		res.json({ ok: true, rows, data: resultData, message, municipality: config.id, csvFilename: config.csvFilename });
+	} catch (err) {
+		console.error('❌ SCRAPE ERROR:', err);
+		res.status(500).json({
+			ok: false,
+			error: err.message || 'Scrape failed',
+			stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+		});
+	}
+});
+
+app.post('/api/flags', async (req, res) => {
+	const { tenderNumber, interested, reviewed, tendered, notInterested, comment, assignedTo, reviewedBy } = req.body || {};
 	if (!tenderNumber) return res.status(400).json({ error: 'tenderNumber required' });
-	const flags = loadFlags();
+	const flags = await loadFlags();
 	const prev = flags[tenderNumber] || {};
-	flags[tenderNumber] = {
+	const data = {
 		interested: interested !== undefined ? !!interested : !!prev.interested,
 		reviewed: reviewed !== undefined ? !!reviewed : !!prev.reviewed,
 		tendered: tendered !== undefined ? !!tendered : !!prev.tendered,
 		notInterested: notInterested !== undefined ? !!notInterested : !!prev.notInterested,
-		comment: comment !== undefined ? String(comment) : (prev.comment || '')
+		comment: comment !== undefined ? String(comment) : (prev.comment || ''),
+		assignedTo: assignedTo !== undefined ? String(assignedTo) : (prev.assignedTo || ''),
+		reviewedBy: reviewedBy !== undefined ? String(reviewedBy) : (prev.reviewedBy || '')
 	};
-	if (!saveFlags(flags)) return res.status(500).json({ error: 'Failed to save' });
+	if (!(await saveFlag(tenderNumber, data))) return res.status(500).json({ error: 'Failed to save' });
 	res.json({ ok: true });
 });
 
 if (require.main === module) {
 	app.listen(PORT, () => {
 		console.log(`Web app running on http://localhost:${PORT}`);
+		console.log(`  Frontend + API served from single server. Open the URL above.`);
 	});
 }
 

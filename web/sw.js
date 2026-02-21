@@ -1,4 +1,6 @@
-// Minimal service worker for PWA installability (Chrome requires fetch handler)
+// Minimal service worker for PWA installability (v2 - fetch handler with error handling)
 self.addEventListener('install', (e) => { e.waitUntil(self.skipWaiting()); });
 self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); });
-self.addEventListener('fetch', (e) => { e.respondWith(fetch(e.request)); });
+self.addEventListener('fetch', (e) => {
+  e.respondWith(fetch(e.request).catch(() => new Response('', { status: 503, statusText: 'Service Unavailable' })));
+});

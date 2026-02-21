@@ -3,5 +3,77 @@
     "reviewed": false,
     "tendered": false,
     "comment": ""
+  },
+  "EHC/PLPP/2026": {
+    "reviewed": false,
+    "tendered": false,
+    "comment": ""
+  },
+  "WCGHSC0414/2023": {
+    "reviewed": false,
+    "tendered": false,
+    "comment": ""
+  },
+  "GQET-25/26-040": {
+    "interested": false,
+    "reviewed": false,
+    "tendered": true,
+    "notInterested": false,
+    "comment": ""
+  },
+  "GQET-25/26-041": {
+    "reviewed": true,
+    "tendered": false,
+    "comment": ""
+  },
+  "GT/GPT/009/2026": {
+    "reviewed": false,
+    "tendered": true,
+    "comment": ""
+  },
+  "SCMU: 13 - 2025/26": {
+    "reviewed": false,
+    "tendered": true,
+    "comment": ""
+  },
+  "BSM 31/26": {
+    "reviewed": false,
+    "tendered": false,
+    "comment": ""
+  },
+  "SCMU10-25/26-0018": {
+    "reviewed": false,
+    "tendered": false,
+    "comment": ""
+  },
+  "BSM 64/26": {
+    "reviewed": false,
+    "tendered": false,
+    "comment": ""
+  },
+  "CDC/50/26": {
+    "reviewed": true,
+    "tendered": false,
+    "comment": ""
+  },
+  "UE50": {
+    "reviewed": false,
+    "tendered": false,
+    "comment": ""
+  },
+  "RFQ45 2025-2026": {
+    "reviewed": false,
+    "tendered": false,
+    "comment": ""
+  },
+  "ULM-INFR 008/26": {
+    "reviewed": true,
+    "tendered": false,
+    "comment": ""
+  },
+  "Q33-2025": {
+    "reviewed": false,
+    "tendered": true,
+    "comment": ""
   }
 }
