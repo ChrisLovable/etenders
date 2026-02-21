@@ -4,6 +4,8 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
+const cheerio = require('cheerio');
+const XLSX = require('xlsx');
 const { parse } = require('csv-parse/sync');
 const { stringify } = require('csv-stringify/sync');
 
@@ -22,7 +24,46 @@ const TMP_EMPLOYEES = '/tmp/employees.json';
 const EMPLOYEES_FILENAME = 'employees.json';
 const CSV_FILENAME = 'advertised_tenders.csv';
 const ETENDER_GOV_FILENAME = 'etender_gov_data.csv';
+const TENDER_ALERTS_FILENAME = 'tender_alerts.csv';
 const FLAGS_FILENAME = 'flags.json';
+const MUNICIPALITIES_WORKBOOK_CANDIDATES = [
+	path.join(__dirname, 'public', 'municipalities.xlsx'),
+	path.join(__dirname, 'public', 'Municipalities.xlsx'),
+	path.join(__dirname, 'public', 'municipalities.xls'),
+	path.join(__dirname, 'public', 'Municipalities.xls'),
+	path.join(__dirname, '..', 'public', 'municipalities.xlsx'),
+	path.join(__dirname, '..', 'public', 'Municipalities.xlsx'),
+	path.join(__dirname, '..', 'public', 'municipalities.xls'),
+	path.join(__dirname, '..', 'public', 'Municipalities.xls')
+];
+const DEFAULT_PROVINCE_BY_ID = new Map([
+	['matjhabeng', 'Free State'],
+	['mangaung', 'Free State'],
+	['masilonyana', 'Free State'],
+	['mohokare', 'Free State'],
+	['moqhaka', 'Free State'],
+	['nketoana', 'Free State'],
+	['phumelela', 'Free State'],
+	['nelsonmandelabay', 'Eastern Cape'],
+	['buffalocity', 'Eastern Cape'],
+	['sarahbaartman', 'Eastern Cape'],
+	['kouga', 'Eastern Cape'],
+	['amathole', 'Eastern Cape'],
+	['capetown', 'Western Cape'],
+	['westcoastdm', 'Western Cape'],
+	['beaufortwest', 'Western Cape'],
+	['bergrivier', 'Western Cape'],
+	['cederberg', 'Western Cape'],
+	['laingsburg', 'Western Cape'],
+	['langeberg', 'Western Cape'],
+	['oudtshoorn', 'Western Cape'],
+	['overstrand', 'Western Cape'],
+	['princealbert', 'Western Cape'],
+	['saldanhabay', 'Western Cape'],
+	['stellenbosch', 'Western Cape'],
+	['swartland', 'Western Cape'],
+	['swellendam', 'Western Cape']
+]);
 
 app.use(express.json());
 // Netlify rewrites /api/* to /.netlify/functions/server/api/:splat - normalize so /api/* routes match
@@ -50,6 +91,118 @@ app.get('/data/etender_gov_data.csv', (req, res) => {
 // Serve other data files from project root (local only; /data/* served by CDN in prod)
 app.use('/data', express.static(__dirname));
 
+function normalizeMunicipalityToken(value) {
+	return String(value || '')
+		.toLowerCase()
+		.replace(/municipality|local|district|metropolitan|metro/g, '')
+		.replace(/[^a-z0-9]+/g, '')
+		.trim();
+}
+
+function getMunicipalWorkbookPath() {
+	for (const p of MUNICIPALITIES_WORKBOOK_CANDIDATES) {
+		if (fs.existsSync(p)) return p;
+	}
+	return '';
+}
+
+function normalizeProvinceToken(value) {
+	return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '').trim();
+}
+
+function toCanonicalProvince(value) {
+	const token = normalizeProvinceToken(value);
+	const map = {
+		easterncape: 'Eastern Cape',
+		freestate: 'Free State',
+		gauteng: 'Gauteng',
+		kwazulunatal: 'KwaZulu-Natal',
+		limpopo: 'Limpopo',
+		mpumalanga: 'Mpumalanga',
+		northerncape: 'Northern Cape',
+		northwest: 'North West',
+		westerncape: 'Western Cape',
+		wc: 'Western Cape',
+		fs: 'Free State',
+		ec: 'Eastern Cape',
+		gp: 'Gauteng',
+		kzn: 'KwaZulu-Natal',
+		lp: 'Limpopo',
+		mp: 'Mpumalanga',
+		nc: 'Northern Cape',
+		nw: 'North West'
+	};
+	return map[token] || '';
+}
+
+function extractProvinceFromWorkbookRow(row) {
+	const entries = Object.entries(row || {});
+	for (const [k, v] of entries) {
+		if (!/province/i.test(String(k || ''))) continue;
+		const p = toCanonicalProvince(v);
+		if (p) return p;
+	}
+	for (const [, v] of entries) {
+		const p = toCanonicalProvince(v);
+		if (p) return p;
+	}
+	return '';
+}
+
+function getWorkbookMunicipalityConfig(scrapers) {
+	const workbookPath = getMunicipalWorkbookPath();
+	if (!workbookPath) return null;
+	try {
+		const wb = XLSX.readFile(workbookPath);
+		const sheetName = wb.SheetNames[0];
+		if (!sheetName) return null;
+		const sheet = wb.Sheets[sheetName];
+		const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+		if (!Array.isArray(rows) || rows.length === 0) return null;
+
+		const byId = new Map(scrapers.map(s => [String(s.id || '').toLowerCase(), s.id]));
+		const byName = new Map();
+		for (const s of scrapers) {
+			const keys = [s.shortName, s.name, s.id];
+			for (const k of keys) {
+				const nk = normalizeMunicipalityToken(k);
+				if (nk) byName.set(nk, s.id);
+			}
+		}
+
+		const allowed = new Set();
+		const provinceById = new Map();
+		for (const row of rows) {
+			let matchedId = '';
+			const values = Object.values(row);
+			for (const raw of values) {
+				const val = String(raw || '').trim();
+				if (!val) continue;
+				const asId = val.toLowerCase();
+				if (byId.has(asId)) {
+					matchedId = byId.get(asId);
+					break;
+				}
+				const nk = normalizeMunicipalityToken(val);
+				if (byName.has(nk)) {
+					matchedId = byName.get(nk);
+					break;
+				}
+			}
+			if (!matchedId) continue;
+			allowed.add(matchedId);
+			const province = extractProvinceFromWorkbookRow(row);
+			if (province) provinceById.set(matchedId, province);
+		}
+
+		if (!allowed.size) return null;
+		return { allowedIds: allowed, provinceById };
+	} catch (err) {
+		console.warn('Could not parse municipalities.xlsx:', err.message);
+		return null;
+	}
+}
+
 function parseCsvDate(value) {
 	if (!value) return new Date('1900-01-01');
 	const [dd, mm, yyyy] = String(value).split('/');
@@ -61,6 +214,14 @@ function formatDate(d) {
 	const mm = String(d.getMonth() + 1).padStart(2, '0');
 	const yyyy = d.getFullYear();
 	return `${dd}/${mm}/${yyyy}`;
+}
+
+function parseIsoDateTimeToCsv(value) {
+	const raw = String(value || '').trim();
+	if (!raw || /^n\/a$/i.test(raw)) return '';
+	const d = new Date(raw);
+	if (isNaN(d.getTime())) return raw;
+	return formatDate(d);
 }
 
 async function fetchAdvertisedAll() {
@@ -116,6 +277,75 @@ async function fetchAdvertisedAll() {
 	});
 }
 
+function normalizeWhitespace(s) {
+	return String(s || '').replace(/\s+/g, ' ').trim();
+}
+
+function parseTenderAlertCards(html) {
+	const $ = cheerio.load(html);
+	const items = [];
+	const cards = $('h6').toArray();
+	for (const h of cards) {
+		const title = normalizeWhitespace($(h).text());
+		if (!title) continue;
+		const container = $(h).closest('article, .card, .search-result, .result, .row, li, div');
+		const blockText = normalizeWhitespace(container.text() || '');
+		if (!/Tender no:/i.test(blockText) || !/Province where service required:/i.test(blockText)) continue;
+		const tenderNo = (blockText.match(/Tender no:\s*([^\n\r]+?)\s*(Province where service required:|Closing date & time:|Briefing date & time:|$)/i) || [])[1] || '';
+		const province = (blockText.match(/Province where service required:\s*([^\n\r]+?)\s*(Closing date & time:|Briefing date & time:|Tender no:|$)/i) || [])[1] || '';
+		const closingRaw = (blockText.match(/Closing date & time:\s*([^\n\r]+?)\s*(Briefing date & time:|Tender no:|$)/i) || [])[1] || '';
+		const briefingRaw = (blockText.match(/Briefing date & time:\s*([^\n\r]+?)\s*(Tender no:|$)/i) || [])[1] || '';
+		const tenderNumber = normalizeWhitespace(tenderNo);
+		const description = normalizeWhitespace(title);
+		if (!tenderNumber || !description) continue;
+		items.push({
+			'Category': 'TenderAlerts',
+			'Tender Number': tenderNumber,
+			'Tender Description': description,
+			'Advertised': '',
+			'Closing': parseIsoDateTimeToCsv(closingRaw),
+			'Organ Of State': '',
+			'Tender Type': '',
+			'Province': normalizeWhitespace(province),
+			'Place where goods, works or services are required': '',
+			'Special Conditions': '',
+			'Contact Person': '',
+			'Email': '',
+			'Telephone number': '',
+			'FAX Number': '',
+			'Is there a briefing session?': '',
+			'Is it compulsory?': '',
+			'Briefing Date and Time': normalizeWhitespace(briefingRaw),
+			'Briefing Venue': '',
+			'eSubmission': '',
+			'Two Envelope Submission': '',
+			'Source URL': 'https://tenderalerts.co.za/tenders/all',
+			'Tender ID': ''
+		});
+	}
+	return items;
+}
+
+async function fetchTenderAlertsAll(maxPages = 8) {
+	const out = [];
+	const seen = new Set();
+	for (let page = 1; page <= maxPages; page++) {
+		const url = page === 1
+			? 'https://tenderalerts.co.za/tenders/all'
+			: `https://tenderalerts.co.za/tenders/all?page=${page}`;
+		const { data: html } = await axios.get(url, { timeout: 30000, headers: { 'User-Agent': 'Mozilla/5.0' } });
+		const rows = parseTenderAlertCards(html);
+		if (rows.length === 0) break;
+		for (const r of rows) {
+			const key = `${r['Tender Number']}|${r['Tender Description']}`;
+			if (seen.has(key)) continue;
+			seen.add(key);
+			out.push(r);
+		}
+	}
+	return out;
+}
+
 app.get('/api/update', async (req, res) => {
 	try {
 		// Serverless: use /tmp ONLY - never /var/task. Bootstrap from CDN if /tmp empty.
@@ -146,8 +376,14 @@ app.get('/api/update', async (req, res) => {
 		const allRemote = await fetchAdvertisedAll();
 		const newOnes = allRemote.filter(r => parseCsvDate(r.advertised) > lastMax && !seenNumbers.has(r.tenderNumber));
 		const added = newOnes.length;
+		let merged = existing.map(r => ({
+			...r,
+			'Source URL': r['Source URL'] || '',
+			'Tender ID': r['Tender ID'] || ''
+		}));
+		let csv = '';
 		if (added > 0) {
-			const merged = [...newOnes.map(r => ({
+			merged = [...newOnes.map(r => ({
 				'Category': r.category,
 				'Tender Number': r.tenderNumber,
 				'Tender Description': r.description,
@@ -170,22 +406,43 @@ app.get('/api/update', async (req, res) => {
 				'Two Envelope Submission': r.twoEnvelopeSubmission,
 				'Source URL': r.sourceUrl || '',
 				'Tender ID': r.tenderId || ''
-			})), ...existing.map(r => ({
-				...r,
-				'Source URL': r['Source URL'] || '',
-				'Tender ID': r['Tender ID'] || ''
-			}))];
-			const csv = stringify(merged, { header: true });
-			fs.writeFileSync(TMP_CSV, csv);
-			// Write etender_gov_data.csv (numbers + descriptions only, eTenders.gov.za data)
-			const govRows = merged.map(r => ({ 'Tender Number': r['Tender Number'] || '', 'Tender Description': r['Tender Description'] || '' }));
-			const govCsv = stringify(govRows, { header: true });
-			const govPath = IS_SERVERLESS ? TMP_ETENDER_GOV : path.join(__dirname, ETENDER_GOV_FILENAME);
-			fs.writeFileSync(govPath, govCsv);
-			// Return CSV in response so frontend can use it (CDN serves static file, not updated)
-			return res.json({ added, lastAdvertised: formatDate(lastMax), csv });
+			})), ...merged];
+			csv = stringify(merged, { header: true });
+			const outCsvPath = IS_SERVERLESS ? TMP_CSV : path.join(__dirname, CSV_FILENAME);
+			fs.writeFileSync(outCsvPath, csv);
 		}
-		res.json({ added, lastAdvertised: formatDate(lastMax) });
+		// Always refresh etender_gov_data.csv from the currently known national dataset.
+		const govRows = merged.map(r => ({ 'Tender Number': r['Tender Number'] || '', 'Tender Description': r['Tender Description'] || '' }));
+		const govCsv = stringify(govRows, { header: true });
+		const govPath = IS_SERVERLESS ? TMP_ETENDER_GOV : path.join(__dirname, ETENDER_GOV_FILENAME);
+		fs.writeFileSync(govPath, govCsv);
+
+		// Tender Alerts scrape/update (best-effort, does not fail whole update).
+		let tenderAlertsAdded = 0;
+		try {
+			const alertsPath = path.join(__dirname, TENDER_ALERTS_FILENAME);
+			const existingAlerts = fs.existsSync(alertsPath)
+				? parse(fs.readFileSync(alertsPath, 'utf8'), { columns: true, skip_empty_lines: true })
+				: [];
+			const alertSeen = new Set(existingAlerts.map(r => `${(r['Tender Number'] || '').trim()}|${(r['Tender Description'] || '').trim()}`));
+			const fetchedAlerts = await fetchTenderAlertsAll();
+			const newAlerts = fetchedAlerts.filter(r => !alertSeen.has(`${(r['Tender Number'] || '').trim()}|${(r['Tender Description'] || '').trim()}`));
+			tenderAlertsAdded = newAlerts.length;
+			const mergedAlerts = [...newAlerts, ...existingAlerts];
+			const alertsCsv = stringify(mergedAlerts, { header: true });
+			fs.writeFileSync(alertsPath, alertsCsv);
+		} catch (alertErr) {
+			console.warn('TenderAlerts update failed:', alertErr.message);
+		}
+
+		const message = `${added} eTenders update(s), ${tenderAlertsAdded} TenderAlerts update(s)`;
+		res.json({
+			added,
+			lastAdvertised: formatDate(lastMax),
+			tenderAlertsAdded,
+			message,
+			...(csv ? { csv } : {})
+		});
 	} catch (err) {
 		res.status(500).json({ error: err.message });
 	}
@@ -438,7 +695,25 @@ app.delete('/api/employees/:id', async (req, res) => {
 // Municipal scrapers - routes to correct scraper by municipality id
 app.get('/api/scrape/municipal/list', (req, res) => {
 	const { listScrapers } = require('./municipal_scrapers');
-	res.json({ ok: true, scrapers: listScrapers() });
+	const scrapers = listScrapers();
+	const workbookCfg = getWorkbookMunicipalityConfig(scrapers);
+	const selectedProvince = toCanonicalProvince(req.query.province || '');
+	let filtered = workbookCfg?.allowedIds ? scrapers.filter(s => workbookCfg.allowedIds.has(s.id)) : scrapers;
+	const provinceById = (workbookCfg?.provinceById && workbookCfg.provinceById.size)
+		? workbookCfg.provinceById
+		: DEFAULT_PROVINCE_BY_ID;
+	const canProvinceFilter = !!(selectedProvince && provinceById && provinceById.size);
+	if (canProvinceFilter) {
+		filtered = filtered.filter(s => provinceById.get(s.id) === selectedProvince);
+	}
+	res.json({
+		ok: true,
+		scrapers: filtered,
+		workbookApplied: !!workbookCfg?.allowedIds,
+		provinceFilterApplied: canProvinceFilter,
+		selectedProvince: selectedProvince || '',
+		provinceSource: (workbookCfg?.provinceById && workbookCfg.provinceById.size) ? 'workbook' : 'fallback'
+	});
 });
 
 // Explicit scraper map - no dynamic require, avoids cache returning wrong scraper

@@ -13,9 +13,11 @@
 </head>
 <body>
 <div id="app">
+  <div class="hero-sticky">
   <header class="app-header">
     <div class="left">
       <img src="/assets/logo.png" alt="Proper Consulting Engineers" class="logo" />
+      <button id="updateBtn" class="btn primary big">Update Latest</button>
       <button id="dashboardBtn" class="btn primary" title="Senior reviewer dashboard">Dashboard</button>
       <button id="employeeGroupBtn" class="btn primary" title="Manage group members for notifications">Employee group</button>
       <button id="installBtn" class="btn primary">Install</button>
@@ -24,16 +26,49 @@
   </header>
 
   <section class="controls">
-    <div class="search-row">
-      <div class="search-buttons">
-        <button id="updateBtn" class="btn primary big">Update Latest</button>
+    <div class="search-all-container">
+      <div class="panel-title">Search all tenders</div>
+      <div class="search-input-row global-search-row">
+        <input id="q" class="input" type="text" placeholder="Search keywords" />
         <button id="clearBtn" class="btn primary" title="Clear search">Clear</button>
-        <button id="customCriteriaBtn" class="btn primary" title="Set your saved search criteria">Custom criteria</button>
-        <button id="searchMyCriteriaBtn" class="btn primary" title="Search using your saved criteria">Search my criteria</button>
-        <button id="clearCustomCriteriaBtnMain" class="btn primary" title="Clear saved custom criteria">Clear Custom Criteria</button>
+        <div class="radio-container inclusive-exclusive-container" title="Match all: every filter must match. Inclusive: any filter can match.">
+          <label><input type="radio" name="mainMatchMode" value="all" /> Match all criteria ("AND")</label>
+          <label><input type="radio" name="mainMatchMode" value="expansive" checked /> Inclusive ("OR")</label>
+        </div>
+        <button id="searchBtn" class="btn primary">Search all tenders</button>
+      </div>
+      <div class="filters-row global-filters-row">
+        <select id="organ" class="select"></select>
+        <select id="category" class="select"></select>
+        <select id="advRange" class="select" title="Advertised date range">
+          <option value="any">Any time</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+          <option value="90d">Last 90 days</option>
+          <option value="this_month">This month</option>
+          <option value="last_month">Last month</option>
+          <option value="this_year">This year</option>
+          <option value="last_year">Last year</option>
+        </select>
+        <div class="show-inline" id="showInline">
+          <label class="show-option"><input type="checkbox" id="showAll" checked /> Show all</label>
+          <label class="show-option"><input type="checkbox" id="showInterested" /> Interested</label>
+          <label class="show-option"><input type="checkbox" id="showReviewed" /> Reviewed</label>
+          <label class="show-option"><input type="checkbox" id="showTendered" /> Tendered</label>
+          <label class="show-option"><input type="checkbox" id="showNotInterested" /> Not interested</label>
+        </div>
+      </div>
+    </div>
+    <div class="top-split">
+      <div class="top-panel">
+        <div class="panel-title">Search provincial / municipality tenders</div>
+        <div class="province-radios-wrap">
+          <div id="provinceRadios" class="radio-container province-radios"></div>
+          <select id="province" class="select province-hidden-select"></select>
+        </div>
         <div class="municipal-scraper-row">
-          <select id="municipalScraperSel" class="select" title="Select municipality to scrape">
-            <option value="">Municipal tenders...</option>
+          <select id="municipalScraperSel" class="select" title="Select Municipality">
+            <option value="">Select Municipality</option>
             <option value="matjhabeng">Matjhabeng</option>
             <option value="mangaung">Mangaung</option>
             <option value="nelsonmandelabay">Nelson Mandela Bay</option>
@@ -47,49 +82,22 @@
             <option value="nketoana">Nketoana</option>
             <option value="phumelela">Phumelela</option>
           </select>
-          <button id="runMunicipalScraperBtn" class="btn primary" title="Run selected municipal scraper" disabled>Run</button>
+          <button id="searchMunicipalBtn" class="btn primary" title="Search province/municipality tenders" disabled>Search province/municipality</button>
         </div>
-        <span id="updateMsg" class="muted" style="align-self:center"></span>
-      </div>
-      <div class="search-input-row">
-        <input id="q" class="input" type="text" placeholder="Search keywords" />
-        <div class="radio-container active-all-container">
-          <label><input type="radio" name="activeFilter" value="active" checked /> Active</label>
-          <label><input type="radio" name="activeFilter" value="all" /> All</label>
-        </div>
-        <button id="searchBtn" class="btn primary">Search</button>
       </div>
     </div>
-    <div class="filters-row">
-      <select id="province" class="select"></select>
-      <select id="organ" class="select"></select>
-      <select id="category" class="select"></select>
-      <select id="advRange" class="select" title="Advertised date range">
-        <option value="any">Any time</option>
-        <option value="7d">Last 7 days</option>
-        <option value="30d">Last 30 days</option>
-        <option value="90d">Last 90 days</option>
-        <option value="this_month">This month</option>
-        <option value="last_month">Last month</option>
-        <option value="this_year">This year</option>
-        <option value="last_year">Last year</option>
-      </select>
-      <div class="show-dropdown" id="showDropdown">
-        <button type="button" class="show-trigger select" id="showTrigger">Show</button>
-        <div class="show-panel" id="showPanel" aria-hidden="true">
-          <label class="show-option"><input type="checkbox" id="showAll" checked /> Show all</label>
-          <label class="show-option"><input type="checkbox" id="showInterested" /> Interested</label>
-          <label class="show-option"><input type="checkbox" id="showReviewed" /> Reviewed</label>
-          <label class="show-option"><input type="checkbox" id="showTendered" /> Tendered</label>
-          <label class="show-option"><input type="checkbox" id="showNotInterested" /> Not interested</label>
-        </div>
+    <div class="custom-search-container">
+      <div class="panel-title">Custom Search</div>
+      <div class="custom-search-buttons">
+        <button id="customCriteriaBtn" class="btn primary" title="Set your saved search criteria">Custom criteria</button>
+        <button id="searchMyCriteriaBtn" class="btn primary" title="Search using your saved criteria">Search my criteria</button>
+        <button id="clearCustomCriteriaBtnMain" class="btn primary" title="Clear saved custom criteria">Clear Custom Criteria</button>
+        <span id="updateMsg" class="muted custom-search-msg"></span>
       </div>
-      <div class="radio-container inclusive-exclusive-container" title="Match all: every filter must match. Inclusive: any filter can match.">
-        <label><input type="radio" name="mainMatchMode" value="all" /> Match all criteria ("AND")</label>
-        <label><input type="radio" name="mainMatchMode" value="expansive" checked /> Inclusive ("OR")</label>
-      </div>
+      <div id="customCriteriaSummary" class="muted custom-criteria-summary">No custom criteria set</div>
     </div>
   </section>
+  </div>
 
   <div id="customCriteriaModal" class="modal" aria-hidden="true">
     <div class="modal-backdrop"></div>
@@ -200,6 +208,10 @@
     <div class="dashboard-sections" id="dashboardSections"></div>
   </section>
 
+</div>
+<div id="busyOverlay" class="busy-overlay" aria-hidden="true">
+  <div class="busy-spinner" aria-hidden="true"></div>
+  <div id="busyText" class="busy-text">Working...</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>

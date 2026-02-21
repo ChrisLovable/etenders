@@ -14,10 +14,52 @@ const gridContainer = $('gridContainer');
 const stats = $('stats');
 const qInput = $('q');
 const provinceSel = $('province');
+const provinceRadios = $('provinceRadios');
 const organSel = $('organ');
 const categorySel = $('category');
 const advRange = $('advRange');
+const busyOverlay = $('busyOverlay');
+const busyText = $('busyText');
 // AI toggle removed per request
+
+function resizeGridViewport() {
+  if (!gridScroll) return;
+  // Use normal document scrolling; do not constrain card area height.
+  gridScroll.style.maxHeight = '';
+}
+
+function syncHeroOffset() {
+  const hero = document.querySelector('.app-header');
+  const root = document.documentElement;
+  if (!hero || !root) return;
+  const h = Math.ceil(hero.getBoundingClientRect().height || 0);
+  root.style.setProperty('--hero-offset', `${Math.max(0, h)}px`);
+}
+
+function setBusy(isBusy, text = 'Working...') {
+  if (!busyOverlay) return;
+  busyOverlay.setAttribute('aria-hidden', isBusy ? 'false' : 'true');
+  if (busyText) busyText.textContent = text;
+}
+
+async function runWithBusy(text, fn) {
+  setBusy(true, text);
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  try {
+    return await fn();
+  } finally {
+    setBusy(false);
+  }
+}
+
+function getSearchValue() {
+  return qInput ? String(qInput.value || '').trim() : '';
+}
+
+function setSearchValue(value) {
+  const v = String(value || '');
+  if (qInput) qInput.value = v;
+}
 
 let rows = [];
 let aiMap = new Map();
@@ -50,10 +92,48 @@ function buildFilters(data){
     if (!sel) continue;
     sel.innerHTML = '';
     const opt0 = document.createElement('option'); opt0.value=''; opt0.textContent=label; sel.appendChild(opt0);
-    for(const v of unique(key)){
+    const values = unique(key).filter(v => !(key === 'Province' && String(v).toLowerCase() === 'national'));
+    for(const v of values){
       const o=document.createElement('option'); o.value=v; o.textContent=v; sel.appendChild(o);
     }
   }
+  renderProvinceRadios();
+}
+
+function setProvinceRadioValue(value){
+  if (!provinceRadios) return;
+  const selected = String(value || '');
+  provinceRadios.querySelectorAll('input[name="provinceFilter"]').forEach(r => {
+    r.checked = (r.value === selected);
+  });
+}
+
+function renderProvinceRadios(){
+  if (!provinceRadios || !provinceSel) return;
+  const current = provinceSel.value || '';
+  provinceRadios.innerHTML = '';
+  const addRadio = (value, labelText) => {
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = 'provinceFilter';
+    input.value = value;
+    input.checked = (value === current);
+    input.addEventListener('change', () => {
+      if (!input.checked) return;
+      provinceSel.value = value;
+      loadMunicipalScrapers(value);
+      onFilterChange();
+    });
+    label.appendChild(input);
+    label.appendChild(document.createTextNode(labelText));
+    provinceRadios.appendChild(label);
+  };
+  addRadio('', 'All provinces');
+  [...provinceSel.options]
+    .map(o => o.value)
+    .filter(v => !!v && String(v).toLowerCase() !== 'national')
+    .forEach(v => addRadio(v, v));
 }
 
 function getUniqueValues(key){
@@ -73,6 +153,50 @@ function loadCustomCriteria(){
 
 function saveCustomCriteria(criteria){
   localStorage.setItem(CUSTOM_CRITERIA_KEY, JSON.stringify(criteria));
+}
+
+function renderCustomCriteriaSummary() {
+  const el = $('customCriteriaSummary');
+  if (!el) return;
+  const saved = loadCustomCriteria();
+  const categories = Array.isArray(saved.categories) ? saved.categories : [];
+  const services = Array.isArray(saved.services) ? saved.services : [];
+  const provinces = Array.isArray(saved.provinces) ? saved.provinces : [];
+  const organs = Array.isArray(saved.organs) ? saved.organs : [];
+  const words = Array.isArray(saved.customWords) ? saved.customWords : [];
+  const advRange = saved.advRange || 'any';
+  const mode = saved.matchMode || getMatchMode();
+  const hasAny = categories.length || services.length || provinces.length || organs.length || words.length || advRange !== 'any';
+
+  if (!hasAny) {
+    el.textContent = 'No custom criteria set';
+    return;
+  }
+
+  const rangeLabelMap = {
+    any: 'Any time',
+    '7d': 'Last 7 days',
+    '30d': 'Last 30 days',
+    '90d': 'Last 90 days',
+    this_month: 'This month',
+    last_month: 'Last month',
+    this_year: 'This year',
+    last_year: 'Last year'
+  };
+  const compact = (arr) => arr.length ? arr.join(', ') : 'None';
+  const modeLabel = (mode === 'all' || mode === 'exact') ? 'Match all (AND)' : 'Inclusive (OR)';
+  const section = (label, value) =>
+    `<span class="custom-criteria-heading">${label.toUpperCase()}</span>: ${escapeHtml(value)}`;
+
+  el.innerHTML = [
+    section('Keywords', compact(words)),
+    section('Categories', compact(categories)),
+    section('Services', compact(services)),
+    section('Provinces', compact(provinces)),
+    section('Organs', compact(organs)),
+    section('Date range', rangeLabelMap[advRange] || 'Any time'),
+    section('Mode', modeLabel)
+  ].join(' | ');
 }
 
 function populateCriteriaModal(){
@@ -158,20 +282,27 @@ function filterByCustomCriteria(){
 
   const filtered = rows.filter(r=>{
     const matches = [];
+    const hasNonTimeFilters = provinces.size || organs.size || categories.size || services.size || tq.length;
+    if (useExpansive && (from || to)) {
+      const d = parseCsvDate(r['Advertised']);
+      if ((from && d < startOfDay(from)) || (to && d > endOfDay(to))) return false;
+    }
     if (provinces.size) matches.push(provinces.has(r['Province']));
     if (organs.size) matches.push(organs.has(r['Organ Of State']));
     if (categories.size) matches.push(categories.has(r['Category']));
     if (services.size) matches.push(services.has(r['Category']));
     if (from || to) {
-      const d = parseCsvDate(r['Advertised']);
-      matches.push((!from || d >= startOfDay(from)) && (!to || d <= endOfDay(to)));
+      if (!useExpansive) {
+        const d = parseCsvDate(r['Advertised']);
+        matches.push((!from || d >= startOfDay(from)) && (!to || d <= endOfDay(to)));
+      }
     }
     if (tq.length) {
       const hay = normalizeText(`${r['Tender Number']} ${r['Tender Description']} ${r['Category']} ${r['Organ Of State']} ${r['Province']} ${r['Special Conditions']}`);
       matches.push(useExpansive ? tq.some(t=>hay.includes(t)) : tq.every(t=>hay.includes(t)));
     }
-    if (matches.length === 0) return true;
-    return matches.every(m=>m);
+    if (matches.length === 0) return !hasNonTimeFilters;
+    return useExpansive ? matches.some(m=>m) : matches.every(m=>m);
   });
 
   const scored = filtered.map(r=>{
@@ -215,20 +346,36 @@ function clearMunicipalViewAndFilter() {
 }
 function filterRows(){
   if (municipalScrapeView) {
-    const searchVal = (qInput && qInput.value) ? String(qInput.value).trim() : '';
+    const searchVal = getSearchValue();
     const tq = tokensFromQuery(searchVal);
-    const activeFilter = document.querySelector('input[name="activeFilter"]:checked')?.value || 'active';
-    const todayStart = startOfDay(new Date());
+    const province = provinceSel?.value;
+    const organ = organSel?.value;
+    const category = categorySel?.value;
+    const { from, to } = rangeToDates(advRange ? advRange.value : 'any');
+    const showAll = $('showAll')?.checked;
+    const showInterested = $('showInterested')?.checked;
+    const showReviewed = $('showReviewed')?.checked;
+    const showTendered = $('showTendered')?.checked;
+    const showNotInterested = $('showNotInterested')?.checked;
+    const showAny = !showAll && (showInterested || showReviewed || showTendered || showNotInterested);
+    const localSaved = showAny ? JSON.parse(localStorage.getItem('tenderFlags')||'{}') : null;
     let filtered = municipalScrapeView.data;
-    if (activeFilter === 'active') {
-      filtered = filtered.filter(r => {
-        if (r['Closing']) {
-          const closingDate = parseCsvDate(r['Closing']);
-          if (closingDate < todayStart) return false;
-        }
-        return true;
-      });
-    }
+    filtered = filtered.filter(r => {
+      if (province && r['Province'] !== province) return false;
+      if (organ && r['Organ Of State'] !== organ) return false;
+      if (category && r['Category'] !== category) return false;
+      if (from || to) {
+        const d = parseCsvDate(r['Advertised']);
+        if (from && d < startOfDay(from)) return false;
+        if (to && d > endOfDay(to)) return false;
+      }
+      if (showAny) {
+        const f = getTenderFlags(r['Tender Number'], localSaved);
+        const match = (showInterested && f.interested) || (showReviewed && f.reviewed) || (showTendered && f.tendered) || (showNotInterested && f.notInterested);
+        if (!match) return false;
+      }
+      return true;
+    });
     if (tq.length) {
       filtered = filtered.filter(r => {
         const hay = normalizeText(`${r['Tender Number']} ${r['Tender Description']} ${r['Category']} ${r['Organ Of State']} ${r['Province']} ${r['Special Conditions']}`);
@@ -242,9 +389,10 @@ function filterRows(){
     }).sort((a, b) => b.score - a.score);
     render(scored.map(x => x.row));
     if (stats) stats.textContent = `${filtered.length} ${municipalScrapeView.source} tenders`;
+    requestAnimationFrame(resizeGridViewport);
     return;
   }
-  const searchVal = (qInput && qInput.value) ? String(qInput.value).trim() : '';
+  const searchVal = getSearchValue();
   const tq = tokensFromQuery(searchVal);
   const province = provinceSel?.value;
   const organ = organSel?.value;
@@ -258,34 +406,18 @@ function filterRows(){
   const showNotInterested = $('showNotInterested')?.checked;
   const showAny = !showAll && (showInterested || showReviewed || showTendered || showNotInterested);
 
-  const activeFilter = document.querySelector('input[name="activeFilter"]:checked')?.value || 'active';
   const matchMode = document.querySelector('input[name="mainMatchMode"]:checked')?.value || getMatchMode();
   const useExpansive = matchMode === 'expansive';
   const localSaved = showAny ? JSON.parse(localStorage.getItem('tenderFlags')||'{}') : null;
-  const todayStart = startOfDay(new Date());
 
   const hasFilters = !!(province || organ || category || tq.length || (from || to));
   if (!hasFilters && !showAny) {
-    const filtered = rows.filter(r=>{
-      if (activeFilter === 'active' && r['Closing']) {
-        const closingDate = parseCsvDate(r['Closing']);
-        if (closingDate < todayStart) return false;
-      }
-      return true;
-    });
+    const filtered = rows;
     render(filtered);
     return;
   }
 
   const filtered = rows.filter(r=>{
-    if (activeFilter === 'active'){
-      const closing = r['Closing'];
-      if (closing) {
-        const closingDate = parseCsvDate(closing);
-        if (closingDate < todayStart) return false;
-      }
-    }
-
     if (showAny){
       const f = getTenderFlags(r['Tender Number'], localSaved);
       const match = (showInterested && f.interested) || (showReviewed && f.reviewed) || (showTendered && f.tendered) || (showNotInterested && f.notInterested);
@@ -296,19 +428,20 @@ function filterRows(){
 
     if (useExpansive) {
       const matches = [];
+      const hasNonTimeFilters = !!(province || organ || category || tq.length);
+      if (from || to) {
+        const d = parseCsvDate(r['Advertised']);
+        if ((from && d < startOfDay(from)) || (to && d > endOfDay(to))) return false;
+      }
       if (province) matches.push(r['Province']===province);
       if (organ) matches.push(r['Organ Of State']===organ);
       if (category) matches.push(r['Category']===category);
-      if (from || to) {
-        const d = parseCsvDate(r['Advertised']);
-        matches.push((!from || d >= startOfDay(from)) && (!to || d <= endOfDay(to)));
-      }
       if (tq.length) {
         const hay = normalizeText(`${r['Tender Number']} ${r['Tender Description']} ${r['Category']} ${r['Organ Of State']} ${r['Province']} ${r['Special Conditions']}`);
         matches.push(tq.some(t=>hay.includes(t)));
       }
-      if (matches.length === 0) return true;
-      return matches.every(m=>m);
+      if (matches.length === 0) return !hasNonTimeFilters;
+      return matches.some(m=>m);
     } else {
       if (province && r['Province']!==province) return false;
       if (organ && r['Organ Of State']!==organ) return false;
@@ -331,6 +464,7 @@ function filterRows(){
   }).sort((a,b)=>b.score-a.score);
 
   render(scored.map(x=>x.row));
+  requestAnimationFrame(resizeGridViewport);
 }
 
 function badge(text){
@@ -711,6 +845,7 @@ function hideDashboard(){
   const dashboard = $('dashboardSection');
   if (results) results.style.display = '';
   if (dashboard) { dashboard.style.display = 'none'; dashboard.setAttribute('aria-hidden','true'); }
+  requestAnimationFrame(resizeGridViewport);
 }
 
 function exportCsv(data){
@@ -835,11 +970,35 @@ $('employeeGroupForm')?.addEventListener('submit', async (e) => {
     }
   } catch (_) { alert('Failed to add member'); }
 });
-$('searchBtn')?.addEventListener('click', ()=>{ hideDashboard(); filterRows(); });
-$('clearBtn')?.addEventListener('click', ()=>{ hideDashboard(); qInput.value=''; if(advRange) advRange.value='any'; provinceSel.value=''; organSel.value=''; categorySel.value=''; clearMunicipalViewAndFilter();});
+$('searchBtn')?.addEventListener('click', async ()=>{ await runWithBusy('Searching tenders...', async ()=>{ hideDashboard(); filterRows(); }); });
+$('clearBtn')?.addEventListener('click', ()=>{
+  hideDashboard();
+  setSearchValue('');
+  if (qInput) qInput.value = '';
+  if (advRange) advRange.value = 'any';
+  if (provinceSel) provinceSel.value = '';
+  setProvinceRadioValue('');
+  if (organSel) organSel.value = '';
+  if (categorySel) categorySel.value = '';
+  const muniSel = $('municipalScraperSel');
+  if (muniSel) muniSel.value = '';
+  const showAll = $('showAll');
+  const showInterested = $('showInterested');
+  const showReviewed = $('showReviewed');
+  const showTendered = $('showTendered');
+  const showNotInterested = $('showNotInterested');
+  if (showAll) showAll.checked = true;
+  if (showInterested) showInterested.checked = false;
+  if (showReviewed) showReviewed.checked = false;
+  if (showTendered) showTendered.checked = false;
+  if (showNotInterested) showNotInterested.checked = false;
+  municipalScrapeView = null;
+  if (typeof updateMunicipalSearchButtonState === 'function') updateMunicipalSearchButtonState();
+  filterRows();
+});
 
 $('customCriteriaBtn')?.addEventListener('click', openCriteriaModal);
-$('searchMyCriteriaBtn')?.addEventListener('click', applySearchMyCriteria);
+$('searchMyCriteriaBtn')?.addEventListener('click', async ()=>{ await runWithBusy('Searching custom criteria...', async ()=> applySearchMyCriteria()); });
 
 $('customCriteriaModal')?.querySelector('.modal-backdrop')?.addEventListener('click', closeCriteriaModal);
 $('customCriteriaModal')?.querySelector('.modal-close')?.addEventListener('click', closeCriteriaModal);
@@ -847,6 +1006,7 @@ $('customCriteriaModal')?.querySelector('.modal-close-btn')?.addEventListener('c
 function clearCustomCriteria(){
   saveCustomCriteria({});
   populateCriteriaModal();
+  renderCustomCriteriaSummary();
   filterRows();
 }
 $('clearCustomCriteriaBtn')?.addEventListener('click', clearCustomCriteria);
@@ -879,6 +1039,7 @@ $('customCriteriaForm')?.addEventListener('submit', (e)=>{
   if (mode === 'exact') mode = 'all';
   criteria.matchMode = mode;
   saveCustomCriteria(criteria);
+  renderCustomCriteriaSummary();
   setMatchMode(mode);
   document.querySelectorAll('input[name="mainMatchMode"]').forEach(r => { r.checked = (r.value === mode); });
   closeCriteriaModal();
@@ -892,22 +1053,16 @@ function onFilterChange() {
   if (municipalScrapeView) return; // Keep showing municipal data - don't switch to global filter
   clearMunicipalViewAndFilter();
 }
-provinceSel?.addEventListener('change', onFilterChange);
+provinceSel?.addEventListener('change', ()=>{ setProvinceRadioValue(provinceSel.value); loadMunicipalScrapers(provinceSel.value); onFilterChange(); });
 organSel?.addEventListener('change', onFilterChange);
 categorySel?.addEventListener('change', onFilterChange);
 if (advRange) advRange.addEventListener('change', onFilterChange);
-document.querySelectorAll('input[name="activeFilter"]').forEach(r=> r?.addEventListener('change', onFilterChange));
 document.querySelectorAll('input[name="mainMatchMode"]').forEach(r=> r?.addEventListener('change', ()=>{
   setMatchMode(r.value);
   onFilterChange();
 }));
-// Show dropdown (Interested/Reviewed/Tendered filter)
-const showTrigger = $('showTrigger');
-const showPanel = $('showPanel');
-const showDropdown = $('showDropdown');
-if (showTrigger && showPanel && showDropdown) {
-  showTrigger.addEventListener('click', (e)=>{ e.stopPropagation(); const open = showPanel.getAttribute('aria-hidden')!=='false'; showPanel.setAttribute('aria-hidden', !open); });
-  document.addEventListener('click', (e)=>{ if (!showDropdown.contains(e.target)) showPanel.setAttribute('aria-hidden','true'); });
+// Show tickboxes (Interested/Reviewed/Tendered filter)
+{
   let showFilterDebounce;
   const onShowChange = (e)=>{
     const showAll = $('showAll');
@@ -922,11 +1077,16 @@ if (showTrigger && showPanel && showDropdown) {
   };
   [$('showAll'), $('showInterested'), $('showReviewed'), $('showTendered'), $('showNotInterested')].forEach(cb=> cb?.addEventListener('change', onShowChange));
 }
-qInput?.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ hideDashboard(); filterRows(); }});
+qInput?.addEventListener('keydown', async (e)=>{ if(e.key==='Enter'){ await runWithBusy('Searching tenders...', async ()=>{ hideDashboard(); filterRows(); }); }});
+window.addEventListener('resize', () => {
+  requestAnimationFrame(resizeGridViewport);
+  requestAnimationFrame(syncHeroOffset);
+});
+window.addEventListener('load', () => requestAnimationFrame(syncHeroOffset));
 const updateBtn = document.getElementById('updateBtn');
 const updateMsg = document.getElementById('updateMsg');
 const municipalScraperSel = $('municipalScraperSel');
-const runMunicipalScraperBtn = $('runMunicipalScraperBtn');
+const searchMunicipalBtn = $('searchMunicipalBtn');
 const municipalSourceById = {
   matjhabeng: 'Matjhabeng',
   mangaung: 'Mangaung',
@@ -984,169 +1144,141 @@ const municipalCsvFallback = [
   'swellendam_tenders.csv'
 ];
 const municipalOrgans = Object.values(municipalSourceById);
+const municipalSourceSet = new Set(municipalOrgans);
+
+function municipalityToken(v) {
+  return String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function updateMunicipalSearchButtonState() {
+  if (!searchMunicipalBtn) return;
+  const hasProvince = !!(provinceSel && provinceSel.value);
+  const hasMunicipality = !!(municipalScraperSel && municipalScraperSel.value);
+  searchMunicipalBtn.disabled = !(hasProvince || hasMunicipality);
+}
 
 // Load municipal scrapers list and populate dropdown
-async function loadMunicipalScrapers() {
+async function loadMunicipalScrapers(province = '') {
   try {
-    const res = await fetch('/api/scrape/municipal/list');
+    const currentValue = municipalScraperSel?.value || '';
+    const p = String(province || '').trim();
+    const url = p
+      ? `/api/scrape/municipal/list?province=${encodeURIComponent(p)}`
+      : '/api/scrape/municipal/list';
+    const res = await fetch(url);
     const data = await res.json();
-    if (res.ok && data.ok && data.scrapers?.length) {
-      municipalScraperSel.innerHTML = '<option value="">Municipal tenders...</option>';
-      data.scrapers.forEach(s => {
+    if (res.ok && data.ok && municipalScraperSel) {
+      municipalScraperSel.innerHTML = '<option value="">Select Municipality</option>';
+      (data.scrapers || []).forEach(s => {
         const opt = document.createElement('option');
         opt.value = s.id;
         opt.textContent = s.shortName;
         municipalScraperSel.appendChild(opt);
       });
+      if (currentValue && (data.scrapers || []).some(s => s.id === currentValue)) {
+        municipalScraperSel.value = currentValue;
+      }
+      updateMunicipalSearchButtonState();
     }
   } catch (_) {}
 }
-loadMunicipalScrapers();
+loadMunicipalScrapers(provinceSel?.value || '');
 
 if (municipalScraperSel) {
-  municipalScraperSel.addEventListener('change', () => {
-    runMunicipalScraperBtn.disabled = !municipalScraperSel.value;
-  });
-}
-
-if (runMunicipalScraperBtn) {
-  runMunicipalScraperBtn.addEventListener('click', async () => {
-    const municipality = municipalScraperSel?.value;
-    if (!municipality) return;
-    runMunicipalScraperBtn.disabled = true;
-    const prevMsg = updateMsg?.textContent || '';
-    const selText = municipalScraperSel?.selectedOptions?.[0]?.textContent || municipality;
-    if (updateMsg) updateMsg.textContent = `Running ${selText} scraper...`;
-    try {
-      const res = await fetch(`/api/scrape/municipal?municipality=${encodeURIComponent(municipality)}`, { method: 'POST' });
-      const ct = res.headers.get('content-type') || '';
-      let data;
-      try {
-        data = ct.includes('application/json') ? await res.json() : { ok: false, error: (await res.text()).slice(0, 200) };
-      } catch (_) {
-        data = { ok: false, error: 'Invalid response from server' };
-      }
-      if (res.ok && data.ok) {
-        const csvFilename = data.csvFilename || `${municipality}_tenders.csv`;
-        const sourceName = municipalSourceById[municipality] || selText;
-        let municipal = [];
-        let dataRejected = false;
-        if (data.data && data.data.length > 0) {
-          municipal = data.data.filter(isLikelyMunicipalSourceRow);
-          // CRITICAL: Reject wrong data - must match requested municipality (never show Matjhabeng when Amathole requested, etc.)
-          const expectedSource = sourceName;
-          const mismatched = municipal.filter(r => {
-            const src = (r['Source'] || '').trim();
-            const organ = (r['Organ Of State'] || '').toLowerCase();
-            if (src !== expectedSource) return true;
-            if (expectedSource === 'Amathole' && organ.includes('matjhabeng')) return true;
-            if (expectedSource === 'Matjhabeng' && organ.includes('amathole')) return true;
-            return false;
-          });
-          if (mismatched.length > 0) {
-            console.warn('Data mismatch: requested', expectedSource, 'but got', mismatched[0]?.['Source'], '- falling back to CSV');
-            municipal = [];
-            dataRejected = true;
-          }
-        }
-        // When API returns wrong data or empty, try CSV (correct CSVs are built from scrapers)
-        if (municipal.length === 0) {
-          try {
-            municipal = (await loadCsv(`/data/${csvFilename}?t=${Date.now()}`)).filter(isLikelyMunicipalSourceRow);
-            const bad = municipal.filter(r => (r['Source'] || '').trim() !== sourceName);
-            if (bad.length > 0) municipal = [];
-            else if (dataRejected && municipal.length > 0 && updateMsg) updateMsg.textContent = `${municipal.length} ${sourceName} tenders (from CSV - API returned wrong data)`;
-          } catch (_) {}
-        }
-        const advMap = new Map();
-        rows.forEach(r => {
-          const isSameSource = r['Source'] === sourceName || (r['Organ Of State'] || '').toLowerCase().includes(sourceName.toLowerCase());
-          if (isSameSource) {
-            const n = (r['Tender Number'] || '').trim();
-            if (n && r['Tender Description'] && !r['Tender Description'].includes('(see document)') && r['Tender Description'].length > 15) {
-              advMap.set(n, r);
-            }
-          }
-        });
-        municipal = municipal.map(m => {
-          const n = (m['Tender Number'] || '').trim();
-          const a = advMap.get(n);
-          if (a) {
-            return {
-              ...m,
-              'Tender Description': a['Tender Description'],
-              'Advertised': a['Advertised'] || m['Advertised'],
-              'Closing': a['Closing'] || m['Closing'],
-              'Place where goods, works or services are required': a['Place where goods, works or services are required'] || m['Place where goods, works or services are required'],
-              'Contact Person': a['Contact Person'] || m['Contact Person'],
-              'Email': a['Email'] || m['Email'],
-              'Telephone number': a['Telephone number'] || m['Telephone number']
-            };
-          }
-          return m;
-        });
-        if (municipal.length > 0) {
-          hideDashboard();
-          rows = rows.filter(r => r['Source'] !== sourceName).concat(municipal);
-          buildFilters(rows);
-          municipalScrapeView = { source: sourceName, data: municipal };
-          displayedData = municipal;
-          render(municipal);
-          if (stats) stats.textContent = `${municipal.length} ${sourceName} tenders`;
-          if (updateMsg) updateMsg.textContent = `${municipal.length} ${sourceName} tenders`;
-          // Do NOT set organSel.value here - it can fire 'change' and clear municipalScrapeView, then filter by wrong organ
-        } else if (!dataRejected && updateMsg) updateMsg.textContent = data.message || 'No tenders found';
-      } else {
-        // API failed - try CSV fallback (correct CSVs are built from scrapers)
-        const csvFilename = (data && data.csvFilename) || `${municipality}_tenders.csv`;
-        const sourceName = municipalSourceById[municipality] || municipalScraperSel?.selectedOptions?.[0]?.textContent || municipality;
-        try {
-          const csvData = (await loadCsv(`/data/${csvFilename}?t=${Date.now()}`)).filter(isLikelyMunicipalSourceRow);
-          const bad = csvData.filter(r => (r['Source'] || '').trim() !== sourceName);
-          if (bad.length === 0 && csvData.length > 0) {
-            hideDashboard();
-            rows = rows.filter(r => r['Source'] !== sourceName).concat(csvData);
-            buildFilters(rows);
-            municipalScrapeView = { source: sourceName, data: csvData };
-            displayedData = csvData;
-            render(csvData);
-            if (stats) stats.textContent = `${csvData.length} ${sourceName} tenders`;
-            if (updateMsg) updateMsg.textContent = `${csvData.length} ${sourceName} tenders (from CSV)`;
-          } else if (updateMsg) updateMsg.textContent = data.error || 'Scrape failed';
-        } catch (_) {
-          if (updateMsg) updateMsg.textContent = data.error || 'Scrape failed';
-        }
-      }
-    } catch (e) {
-      if (updateMsg) updateMsg.textContent = 'Scrape failed: ' + (e.message || 'Network error');
-    } finally {
-      runMunicipalScraperBtn.disabled = !municipality;
-      setTimeout(() => { if (updateMsg) updateMsg.textContent = prevMsg; }, 8000);
+  municipalScraperSel.addEventListener('change', async () => {
+    updateMunicipalSearchButtonState();
+    const municipality = municipalScraperSel?.value || '';
+    if (municipality) {
+      await runWithBusy('Searching municipality tenders...', async ()=> runMunicipalScopedSearch());
+    } else if (municipalScrapeView) {
+      clearMunicipalViewAndFilter();
     }
   });
 }
+
+function runMunicipalScopedSearch() {
+  const municipality = municipalScraperSel?.value || '';
+  const selectedProvince = provinceSel?.value || '';
+  const sourceName = municipality
+    ? (municipalSourceById[municipality] || municipalScraperSel?.selectedOptions?.[0]?.textContent || municipality)
+    : '';
+  const sourceNameLc = String(sourceName || '').toLowerCase();
+  const sourceNameTok = municipalityToken(sourceName);
+  const municipalityTok = municipalityToken(municipality);
+
+  const matchesSelectedMunicipality = (r) => {
+    if (!municipality) return true;
+    const src = String(r['Source'] || '').trim();
+    const organ = String(r['Organ Of State'] || '');
+    const srcLc = src.toLowerCase();
+    const organLc = organ.toLowerCase();
+    const srcTok = municipalityToken(src);
+    const organTok = municipalityToken(organ);
+    if (src === sourceName) return true;
+    if (srcTok === sourceNameTok || srcTok === municipalityTok) return true;
+    if (srcLc.includes(sourceNameLc)) return true;
+    if (organLc.includes(sourceNameLc)) return true;
+    if (sourceNameTok && organTok.includes(sourceNameTok)) return true;
+    if (municipalityTok && organTok.includes(municipalityTok)) return true;
+    return false;
+  };
+
+  let municipal = rows.filter(r => {
+    const src = String(r['Source'] || '').trim();
+    const organ = String(r['Organ Of State'] || '');
+    const category = String(r['Category'] || '').trim().toLowerCase();
+    const isMunicipal = municipalSourceSet.has(src) || category === 'municipal' || municipalOrgans.some(name => organ.includes(name));
+    if (!municipality && !isMunicipal) return false;
+    if (selectedProvince && String(r['Province'] || '') !== selectedProvince) return false;
+    if (!matchesSelectedMunicipality(r)) return false;
+    return true;
+  });
+  if (municipal.length === 0) {
+    municipalScrapeView = null;
+    if (updateMsg) updateMsg.textContent = '';
+    render([]);
+    if (stats) stats.textContent = '0 municipal tenders';
+    return;
+  }
+  hideDashboard();
+  municipalScrapeView = {
+    source: sourceName || (selectedProvince ? `${selectedProvince} municipalities` : 'Municipality'),
+    data: municipal
+  };
+  filterRows();
+  if (updateMsg) updateMsg.textContent = '';
+}
+
+if (searchMunicipalBtn) {
+  searchMunicipalBtn.addEventListener('click', async () => {
+    await runWithBusy('Searching municipality tenders...', async ()=> runMunicipalScopedSearch());
+  });
+}
+updateMunicipalSearchButtonState();
 
 if (updateBtn) {
   updateBtn.addEventListener('click', async () => {
     updateBtn.disabled = true; updateMsg.textContent = 'Checking for updates...';
-    try {
-      const res = await fetch('/api/update');
-      const data = await res.json();
-      if (res.ok) {
-        updateMsg.textContent = data.message || `${data.added} new record(s) added`;
-        // reload dataset if we added anything (use returned csv or refetch)
-        if (data.added > 0 && !data.readOnly) {
-          const csvText = data.csv || (await (await fetch('/data/advertised_tenders.csv')).text());
-          Papa.parse(csvText,{header:true,skipEmptyLines:true,complete:({data})=>{ rows=data; buildFilters(rows); filterRows(); }});
+    await runWithBusy('Updating latest sources...', async () => {
+      try {
+        const res = await fetch('/api/update');
+        const data = await res.json();
+        if (res.ok) {
+          updateMsg.textContent = data.message || `${data.added} new record(s) added`;
+          // reload dataset if we added anything (use returned csv or refetch)
+          if (data.added > 0 && !data.readOnly) {
+            const csvText = data.csv || (await (await fetch('/data/advertised_tenders.csv')).text());
+            Papa.parse(csvText,{header:true,skipEmptyLines:true,complete:({data})=>{ rows=data; buildFilters(rows); filterRows(); }});
+          }
+        } else {
+          updateMsg.textContent = data.error || 'Update failed';
         }
-      } else {
-        updateMsg.textContent = data.error || 'Update failed';
+      } catch (e) {
+        updateMsg.textContent = 'Update failed';
+      } finally {
+        updateBtn.disabled = false;
       }
-    } catch (e) {
-      updateMsg.textContent = 'Update failed';
-    } finally {
-      updateBtn.disabled = false;
-    }
+    });
   });
 }
 
@@ -1279,5 +1411,8 @@ if (installBtn) {
   } catch (_) {}
 
   buildFilters(rows);
+  syncHeroOffset();
+  resizeGridViewport();
+  renderCustomCriteriaSummary();
   filterRows();
 })();
