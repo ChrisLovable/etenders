@@ -339,14 +339,39 @@ function createCard(r){
     if (aiMap.get(r['Tender Number'])) meta.appendChild(badge('AI/Data'));
     const tenderId = r['Tender ID'];
     const tenderNumber = r['Tender Number'] || '';
-    const isMunicipal = r['Source'] && ['Matjhabeng', 'Mangaung', 'Nelson Mandela Bay', 'Buffalo City', 'Sarah Baartman', 'Kouga', 'Amathole', 'Masilonyana', 'Mohokare', 'Moqhaka', 'Nketoana'].includes(r['Source']);
-    const sourceUrl = isMunicipal && r['Source URL'] ? r['Source URL'] : (tenderId ? `/tender/${tenderId}` : (r['Source URL'] && r['Source URL'].startsWith('/') ? r['Source URL'] : (tenderNumber ? `/tender-lookup?tenderNumber=${encodeURIComponent(tenderNumber)}` : 'https://www.etenders.gov.za/Home/opportunities?id=1')));
+    const municipalSources = new Set([
+      'Matjhabeng', 'Mangaung', 'Nelson Mandela Bay', 'Buffalo City', 'Sarah Baartman', 'Kouga',
+      'Amathole', 'Masilonyana', 'Mohokare', 'Moqhaka', 'Nketoana', 'Phumelela', 'Cape Town',
+      'West Coast DM', 'Beaufort West', 'Bergrivier', 'Cederberg', 'Laingsburg', 'Langeberg',
+      'Oudtshoorn', 'Overstrand', 'Prince Albert', 'Saldanha Bay', 'Stellenbosch', 'Swartland',
+      'Swellendam'
+    ]);
+    const src = (r['Source'] || '').trim();
+    const rawSourceUrl = (r['Source URL'] || '').trim();
+    const hasSourceUrl = !!rawSourceUrl;
+    const isEtendersSourceUrl = /etenders\.gov\.za/i.test(rawSourceUrl);
+    const isMunicipal = municipalSources.has(src) || (r['Category'] === 'Municipal');
+    // Municipal rows must open municipality source pages, never eTenders lookup pages.
+    const sourceUrl = isMunicipal
+      ? (hasSourceUrl ? rawSourceUrl : '#')
+      : (hasSourceUrl && !isEtendersSourceUrl
+        ? rawSourceUrl
+        : (tenderId
+          ? `/tender/${tenderId}`
+          : (hasSourceUrl && rawSourceUrl.startsWith('/')
+            ? rawSourceUrl
+            : (tenderNumber ? `/tender-lookup?tenderNumber=${encodeURIComponent(tenderNumber)}` : 'https://www.etenders.gov.za/Home/opportunities?id=1'))));
     const viewBtn = document.createElement('a');
     viewBtn.href = sourceUrl;
     viewBtn.target = '_blank';
     viewBtn.rel = 'noopener noreferrer';
     viewBtn.className = 'btn primary sm view-source';
-    viewBtn.textContent = isMunicipal ? 'View document' : 'View on eTenders';
+    viewBtn.textContent = isMunicipal ? (hasSourceUrl ? 'View source details' : 'Source unavailable') : 'View on eTenders';
+    if (isMunicipal && !hasSourceUrl) {
+      viewBtn.classList.add('btn-disabled');
+      viewBtn.addEventListener('click', (e) => e.preventDefault());
+      viewBtn.title = 'No municipality source URL available for this row';
+    }
     const copyBtn = document.createElement('button');
     copyBtn.className = 'btn primary sm';
     copyBtn.textContent = 'Copy tender number';
@@ -889,6 +914,63 @@ const updateBtn = document.getElementById('updateBtn');
 const updateMsg = document.getElementById('updateMsg');
 const municipalScraperSel = $('municipalScraperSel');
 const runMunicipalScraperBtn = $('runMunicipalScraperBtn');
+const municipalSourceById = {
+  matjhabeng: 'Matjhabeng',
+  mangaung: 'Mangaung',
+  nelsonmandelabay: 'Nelson Mandela Bay',
+  buffalocity: 'Buffalo City',
+  sarahbaartman: 'Sarah Baartman',
+  kouga: 'Kouga',
+  amathole: 'Amathole',
+  masilonyana: 'Masilonyana',
+  mohokare: 'Mohokare',
+  moqhaka: 'Moqhaka',
+  nketoana: 'Nketoana',
+  phumelela: 'Phumelela',
+  capetown: 'Cape Town',
+  westcoastdm: 'West Coast DM',
+  beaufortwest: 'Beaufort West',
+  bergrivier: 'Bergrivier',
+  cederberg: 'Cederberg',
+  laingsburg: 'Laingsburg',
+  langeberg: 'Langeberg',
+  oudtshoorn: 'Oudtshoorn',
+  overstrand: 'Overstrand',
+  princealbert: 'Prince Albert',
+  saldanhabay: 'Saldanha Bay',
+  stellenbosch: 'Stellenbosch',
+  swartland: 'Swartland',
+  swellendam: 'Swellendam'
+};
+const municipalCsvFallback = [
+  'matjhabeng_tenders.csv',
+  'mangaung_tenders.csv',
+  'nelsonmandelabay_tenders.csv',
+  'buffalocity_tenders.csv',
+  'sarahbaartman_tenders.csv',
+  'kouga_tenders.csv',
+  'amathole_tenders.csv',
+  'masilonyana_tenders.csv',
+  'mohokare_tenders.csv',
+  'moqhaka_tenders.csv',
+  'nketoana_tenders.csv',
+  'phumelela_tenders.csv',
+  'capetown_tenders.csv',
+  'westcoastdm_tenders.csv',
+  'beaufortwest_tenders.csv',
+  'bergrivier_tenders.csv',
+  'cederberg_tenders.csv',
+  'laingsburg_tenders.csv',
+  'langeberg_tenders.csv',
+  'oudtshoorn_tenders.csv',
+  'overstrand_tenders.csv',
+  'princealbert_tenders.csv',
+  'saldanhabay_tenders.csv',
+  'stellenbosch_tenders.csv',
+  'swartland_tenders.csv',
+  'swellendam_tenders.csv'
+];
+const municipalOrgans = Object.values(municipalSourceById);
 
 // Load municipal scrapers list and populate dropdown
 async function loadMunicipalScrapers() {
@@ -933,8 +1015,7 @@ if (runMunicipalScraperBtn) {
       }
       if (res.ok && data.ok) {
         const csvFilename = data.csvFilename || `${municipality}_tenders.csv`;
-        const sourceById = { matjhabeng: 'Matjhabeng', mangaung: 'Mangaung', nelsonmandelabay: 'Nelson Mandela Bay', buffalocity: 'Buffalo City', sarahbaartman: 'Sarah Baartman', kouga: 'Kouga', amathole: 'Amathole', masilonyana: 'Masilonyana', mohokare: 'Mohokare', moqhaka: 'Moqhaka', nketoana: 'Nketoana', phumelela: 'Phumelela' };
-        const sourceName = sourceById[municipality] || selText;
+        const sourceName = municipalSourceById[municipality] || selText;
         let municipal = [];
         let dataRejected = false;
         if (data.data && data.data.length > 0) {
@@ -1005,8 +1086,7 @@ if (runMunicipalScraperBtn) {
       } else {
         // API failed - try CSV fallback (correct CSVs are built from scrapers)
         const csvFilename = (data && data.csvFilename) || `${municipality}_tenders.csv`;
-        const sourceById = { matjhabeng: 'Matjhabeng', mangaung: 'Mangaung', nelsonmandelabay: 'Nelson Mandela Bay', buffalocity: 'Buffalo City', sarahbaartman: 'Sarah Baartman', kouga: 'Kouga', amathole: 'Amathole', masilonyana: 'Masilonyana', mohokare: 'Mohokare', moqhaka: 'Moqhaka', nketoana: 'Nketoana', phumelela: 'Phumelela' };
-        const sourceName = sourceById[municipality] || municipalScraperSel?.selectedOptions?.[0]?.textContent || municipality;
+        const sourceName = municipalSourceById[municipality] || municipalScraperSel?.selectedOptions?.[0]?.textContent || municipality;
         try {
           const csvData = await loadCsv(`/data/${csvFilename}?t=${Date.now()}`);
           const bad = csvData.filter(r => (r['Source'] || '').trim() !== sourceName);
@@ -1093,39 +1173,61 @@ if (installBtn) {
 }
 
 (async function init(){
-  const adv = await loadCsv(advertisedCsvUrl);
+  let adv = [];
+  try {
+    adv = await loadCsv(advertisedCsvUrl);
+    console.log(`Loaded ${adv.length} advertised tenders`);
+  } catch (e) {
+    console.warn('Could not load advertised_tenders.csv - using empty array', e);
+    adv = [];
+  }
+
   // Load each municipality's own CSV (matjhabeng_tenders.csv, mangaung_tenders.csv, etc.)
   let municipal = [];
   try {
-    const listRes = await fetch('/api/scrape/municipal/list');
-    const listData = await listRes.json();
-    const scrapers = listData.ok && listData.scrapers ? listData.scrapers : [];
-    const csvFiles = scrapers.map(s => s.csvFilename).filter(Boolean);
-    if (csvFiles.length === 0) csvFiles.push('matjhabeng_tenders.csv', 'mangaung_tenders.csv', 'nelsonmandelabay_tenders.csv', 'buffalocity_tenders.csv', 'sarahbaartman_tenders.csv', 'kouga_tenders.csv', 'amathole_tenders.csv', 'masilonyana_tenders.csv', 'mohokare_tenders.csv', 'moqhaka_tenders.csv', 'nketoana_tenders.csv', 'phumelela_tenders.csv');
-    for (const csv of csvFiles) {
-      try {
-        const data = await loadCsv(`/data/${csv}`);
-        municipal = municipal.concat(data);
-      } catch (_) {}
+    const listRes = await fetch('/api/scrape/municipal/list').catch(() => null);
+    if (listRes && listRes.ok) {
+      const listData = await listRes.json();
+      const scrapers = listData.ok && listData.scrapers ? listData.scrapers : [];
+      let csvFiles = scrapers.map(s => s.csvFilename).filter(Boolean);
+      if (csvFiles.length === 0) csvFiles = municipalCsvFallback;
+      for (const csv of csvFiles) {
+        try {
+          const data = await loadCsv(`/data/${csv}`).catch(() => []);
+          if (data && data.length) {
+            municipal = municipal.concat(data);
+            console.log(`Loaded ${data.length} from ${csv}`);
+          }
+        } catch (_) {}
+      }
+    } else {
+      // Fallback - try to load known files
+      for (const csv of municipalCsvFallback) {
+        try {
+          const data = await loadCsv(`/data/${csv}`).catch(() => []);
+          if (data && data.length) {
+            municipal = municipal.concat(data);
+            console.log(`Loaded ${data.length} from ${csv}`);
+          }
+        } catch (_) {}
+      }
     }
   } catch (_) {
-    for (const csv of ['matjhabeng_tenders.csv', 'mangaung_tenders.csv', 'nelsonmandelabay_tenders.csv', 'buffalocity_tenders.csv', 'sarahbaartman_tenders.csv', 'kouga_tenders.csv', 'amathole_tenders.csv', 'masilonyana_tenders.csv', 'mohokare_tenders.csv', 'moqhaka_tenders.csv', 'nketoana_tenders.csv', 'phumelela_tenders.csv']) {
-      try {
-        const data = await loadCsv(`/data/${csv}`);
-        municipal = municipal.concat(data);
-      } catch (_) {}
-    }
+    console.warn('Could not load municipal CSVs');
   }
+
   // Build map of advertised municipal tenders by tender number (Matjhabeng, Mangaung, etc.)
   const advMunicipal = new Map();
-  const municipalOrgans = ['Matjhabeng', 'Mangaung', 'Nelson Mandela Bay', 'Buffalo City', 'Sarah Baartman', 'Kouga', 'Amathole', 'Masilonyana', 'Mohokare', 'Moqhaka', 'Nketoana', 'Phumelela'];
-  adv.filter(r => {
-    const organ = (r['Organ Of State'] || '');
-    return municipalOrgans.some(name => organ.includes(name));
-  }).forEach(r => {
-    const n = (r['Tender Number'] || '').trim();
-    if (n) advMunicipal.set(n, r);
-  });
+  if (adv.length) {
+    adv.filter(r => {
+      const organ = (r['Organ Of State'] || '');
+      return municipalOrgans.some(name => organ.includes(name));
+    }).forEach(r => {
+      const n = (r['Tender Number'] || '').trim();
+      if (n) advMunicipal.set(n, r);
+    });
+  }
+
   // Municipal rows: use advertised data when available, but keep municipal Source URL and Source
   const municipalMerged = municipal.map(m => {
     const n = (m['Tender Number'] || '').trim();
@@ -1136,25 +1238,33 @@ if (installBtn) {
     }
     return m;
   });
+
   // Deduplicate: adv (non-municipal) + advertised municipal not in our scraped list + municipal merged
   const municipalTenderNumbers = new Set(municipalMerged.map(m => (m['Tender Number'] || '').trim()).filter(Boolean));
-  const advNonMunicipal = adv.filter(r => {
+
+  const advNonMunicipal = adv.length ? adv.filter(r => {
     const organ = (r['Organ Of State'] || '');
     return !municipalOrgans.some(name => organ.includes(name));
-  });
-  const advMunicipalFiltered = adv.filter(r => {
+  }) : [];
+
+  const advMunicipalFiltered = adv.length ? adv.filter(r => {
     const organ = (r['Organ Of State'] || '');
     const isMunicipal = municipalOrgans.some(name => organ.includes(name));
     return isMunicipal && !municipalTenderNumbers.has((r['Tender Number'] || '').trim());
-  });
+  }) : [];
+
   rows = [...advNonMunicipal, ...advMunicipalFiltered, ...municipalMerged];
+  console.log(`Total rows loaded: ${rows.length}`);
+
   const mode = getMatchMode();
   document.querySelectorAll('input[name="mainMatchMode"]').forEach(r => { r.checked = (r.value === mode); });
+
   // Load server flags if available
   try {
-    const res = await fetch('/api/flags');
-    if (res.ok) serverFlags = await res.json();
+    const res = await fetch('/api/flags').catch(() => null);
+    if (res && res.ok) serverFlags = await res.json();
   } catch (_) {}
+
   buildFilters(rows);
   filterRows();
 })();

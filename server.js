@@ -454,7 +454,21 @@ const municipalScrapers = {
 	mohokare: require('./scrape_municipal_mohokare'),
 	moqhaka: require('./scrape_municipal_moqhaka'),
 	nketoana: require('./scrape_municipal_nketoana'),
-	phumelela: require('./scrape_municipal_phumelela')
+	phumelela: require('./scrape_municipal_phumelela'),
+	capetown: require('./scrape_municipal_capetown'),
+	westcoastdm: require('./scrape_municipal_westcoastdm'),
+	beaufortwest: require('./scrape_municipal_beaufortwest'),
+	bergrivier: require('./scrape_municipal_bergrivier'),
+	cederberg: require('./scrape_municipal_cederberg'),
+	laingsburg: require('./scrape_municipal_laingsburg'),
+	langeberg: require('./scrape_municipal_langeberg'),
+	oudtshoorn: require('./scrape_municipal_oudtshoorn'),
+	overstrand: require('./scrape_municipal_overstrand'),
+	princealbert: require('./scrape_municipal_princealbert'),
+	saldanhabay: require('./scrape_municipal_saldanhabay'),
+	stellenbosch: require('./scrape_municipal_stellenbosch'),
+	swartland: require('./scrape_municipal_swartland'),
+	swellendam: require('./scrape_municipal_swellendam')
 };
 
 app.post('/api/scrape/municipal', async (req, res) => {
@@ -518,7 +532,15 @@ app.post('/api/flags', async (req, res) => {
 if (require.main === module) {
 	app.listen(PORT, () => {
 		console.log(`Web app running on http://localhost:${PORT}`);
-		console.log(`  Frontend + API served from single server. Open the URL above.`);
+		console.log(`  Open the URL above in your browser.`);
+		// Open browser after a short delay (only when run directly)
+		setTimeout(() => {
+			try {
+				const url = `http://localhost:${PORT}`;
+				const cmd = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
+				require('child_process').spawn(cmd, [url], { shell: true, stdio: 'ignore' });
+			} catch (_) {}
+		}, 1500);
 	});
 }
 
