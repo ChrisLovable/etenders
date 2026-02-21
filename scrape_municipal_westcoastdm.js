@@ -6,6 +6,7 @@ const CFG = {
   organOfState: 'West Coast District Municipality',
   place: 'West Coast District',
   baseUrl: 'https://westcoastdm.co.za',
+  forceSourceUrl: 'https://westcoastdm.co.za/tenders-quotations/',
   urls: ['https://westcoastdm.co.za/tenders-quotations/'],
   csvFilename: 'westcoastdm_tenders.csv',
   linkSelector: 'a[href]',

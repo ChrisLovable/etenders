@@ -85,7 +85,37 @@ function looksTenderLike(text, href) {
   return /(tender|bid|rfq|quotation|procurement|scm|supply chain)/.test(t);
 }
 
+function isNavigationNoise(text, href) {
+  const t = normalizeWhitespace(text).toLowerCase();
+  const h = String(href || '').toLowerCase();
+  if (!t && !h) return true;
+  if (t.includes('login | register') || t.includes('a-z index') || t.includes('faqs about us')) return true;
+  if (t.length > 220 && !/\b(rfq|bid|quotation|closing|deadline|scm)\b/.test(t)) return true;
+  const navWords = /(leadership|services|investor relations|gallery|news|careers|contact us|tourism|about us|home|login|register|a-z|faqs|events)/;
+  const navHrefs = /(\/leadership|\/services|\/investor-relations|\/galleries?|\/news|\/careers|\/contact|\/about|\/tourism|\/events|\/login|\/register)/;
+  if (navWords.test(t) && !/(tender|bid|rfq|quotation|procurement|scm)/.test(t)) return true;
+  if (navHrefs.test(h) && !/(tender|bid|rfq|quotation|procurement|scm)/.test(h)) return true;
+  return false;
+}
+
+function isRealTenderRow({ tenderNumber, description, sourceUrl }) {
+  const d = normalizeWhitespace(description);
+  const u = String(sourceUrl || '').toLowerCase();
+  if (!u) return false;
+  if (u === 'http://' || u === 'https://') return false;
+  if (u.endsWith('/')) {
+    if (!/(tender|bid|rfq|quotation|procurement|scm)/.test(u)) return false;
+  }
+  if (u.match(/\.(pdf|doc|docx|xlsx?)($|\?)/)) return true;
+  if (u.includes('/sites/default/files/') || u.includes('/wp-content/uploads/')) return true;
+  if (/(download|document|docman)/.test(u) && /(tender|bid|rfq|quotation|procurement|scm)/.test(u)) return true;
+  if (tenderNumber && tenderNumber.length >= 3) return true;
+  if (/(tender|bid|rfq|quotation|procurement|scm)/i.test(d) && d.length >= 15 && /(tender|bid|rfq|quotation|procurement|scm)/.test(u)) return true;
+  return false;
+}
+
 function buildCsvRow(entry, cfg) {
+  const forcedSourceUrl = cfg.forceSourceUrl || '';
   return {
     'Category': 'Municipal',
     'Tender Number': entry.tenderNumber || '',
@@ -107,7 +137,7 @@ function buildCsvRow(entry, cfg) {
     'Briefing Venue': '',
     'eSubmission': '',
     'Two Envelope Submission': '',
-    'Source URL': entry.sourceUrl || cfg.urls[0] || '',
+    'Source URL': forcedSourceUrl || entry.sourceUrl || cfg.urls[0] || '',
     'Tender ID': '',
     'Source': cfg.shortName
   };
@@ -126,14 +156,16 @@ async function scrapeHtmlUrl(url, cfg) {
   $(selector).each((_, a) => {
     const href = $(a).attr('href');
     const linkText = normalizeWhitespace($(a).text());
-    const contextText = normalizeWhitespace($(a).closest(cfg.contextSelector || 'li, tr, article, div').text());
+    const contextText = normalizeWhitespace($(a).closest(cfg.contextSelector || 'li, tr, article, section, .document__item, .docman_document, p').text());
     const text = normalizeWhitespace(`${linkText} ${contextText}`);
     if (!looksTenderLike(text, href)) return;
+    if (isNavigationNoise(text, href)) return;
     const tenderNumber = extractBidNumber(text);
     const closing = parseDateSA(text.match(/(?:close|closing|deadline|end date)[^.\n]{0,60}/i)?.[0] || text);
     const advertised = parseDateSA(text.match(/(?:open|advert|publish|posted|start date)[^.\n]{0,60}/i)?.[0] || '');
     const description = linkText.length >= 8 ? linkText : text.slice(0, 260);
     const sourceUrl = toAbsUrl(cfg.baseUrl, href);
+    if (!isRealTenderRow({ tenderNumber, description, sourceUrl })) return;
     const key = `${tenderNumber}|${sourceUrl}|${description}`;
     if (seen.has(key)) return;
     seen.add(key);

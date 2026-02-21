@@ -6,6 +6,7 @@ const CFG = {
   organOfState: 'Beaufort West Municipality',
   place: 'Beaufort West',
   baseUrl: 'https://www.beaufortwestmun.co.za',
+  forceSourceUrl: 'https://www.beaufortwestmun.co.za/tendersquotations-available',
   urls: ['https://www.beaufortwestmun.co.za/tendersquotations-available'],
   csvFilename: 'beaufortwest_tenders.csv',
   linkSelector: 'a[href]',

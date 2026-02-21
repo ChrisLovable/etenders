@@ -3,6 +3,7 @@ const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const path = require('path');
 
 const API_URL = 'http://overstrand.gov.za/document/supply-chain-management/tenders/?format=json';
+const SOURCE_LIST_URL = 'https://www.overstrand.gov.za/document/supply-chain-management/tenders/';
 
 const CSV_HEADER = [
   { id: 'Category', title: 'Category' },
@@ -63,7 +64,7 @@ function toCsvRow(row) {
     'Briefing Venue': '',
     'eSubmission': '',
     'Two Envelope Submission': '',
-    'Source URL': row.sourceUrl || API_URL,
+    'Source URL': SOURCE_LIST_URL,
     'Tender ID': '',
     'Source': 'Overstrand'
   };
@@ -83,7 +84,7 @@ async function runScraper(opts = {}) {
     const attrs = d.attributes || {};
     const title = attrs.title || attrs.name || '';
     const description = String(attrs.description || title || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    const sourceUrl = attrs.download_url || attrs.url || attrs.link || API_URL;
+    const sourceUrl = attrs.download_url || attrs.url || attrs.link || SOURCE_LIST_URL;
     return {
       tenderNumber: extractTenderNumber(`${title} ${description}`),
       description: description || title || 'Overstrand tender (see document)',

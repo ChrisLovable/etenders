@@ -6,6 +6,7 @@ const CFG = {
   organOfState: 'Saldanha Bay Municipality',
   place: 'Saldanha Bay',
   baseUrl: 'https://sbm.gov.za',
+  forceSourceUrl: 'https://sbm.gov.za/quotations-r30000-below/',
   urls: [
     'https://sbm.gov.za/quotations-r30000-below/',
     'https://sbm.gov.za/quotations-above-r30000/',

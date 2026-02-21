@@ -25,6 +25,19 @@ let serverFlags = {};
 let displayedData = [];
 let municipalScrapeView = null; // When set, we show ONLY this municipality's data; filterRows cannot override
 
+function isLikelyMunicipalSourceRow(r){
+  const url = String(r['Source URL'] || '').toLowerCase().trim();
+  const desc = String(r['Tender Description'] || '').toLowerCase();
+  const num = String(r['Tender Number'] || '').trim();
+  if (!url) return false;
+  if (/\/(leadership|services|investor-relations|galleries?|news|careers|contact|about|tourism|events)\b/.test(url)) return false;
+  if (/login \| register|a-z index|faqs about us/.test(desc)) return false;
+  const urlLooksTender = /(tender|bid|rfq|quotation|procurement|scm|details|docman|document|download|sites\/default\/files|wp-content\/uploads|\.pdf($|\?))/i.test(url);
+  if (urlLooksTender) return true;
+  if (num && desc.length > 12) return true;
+  return false;
+}
+
 async function loadCsv(url){
   return new Promise((resolve,reject)=>{
     Papa.parse(url,{download:true,header:true,skipEmptyLines:true,complete:({data})=>resolve(data),error:reject});
@@ -1019,7 +1032,7 @@ if (runMunicipalScraperBtn) {
         let municipal = [];
         let dataRejected = false;
         if (data.data && data.data.length > 0) {
-          municipal = data.data;
+          municipal = data.data.filter(isLikelyMunicipalSourceRow);
           // CRITICAL: Reject wrong data - must match requested municipality (never show Matjhabeng when Amathole requested, etc.)
           const expectedSource = sourceName;
           const mismatched = municipal.filter(r => {
@@ -1039,7 +1052,7 @@ if (runMunicipalScraperBtn) {
         // When API returns wrong data or empty, try CSV (correct CSVs are built from scrapers)
         if (municipal.length === 0) {
           try {
-            municipal = await loadCsv(`/data/${csvFilename}?t=${Date.now()}`);
+            municipal = (await loadCsv(`/data/${csvFilename}?t=${Date.now()}`)).filter(isLikelyMunicipalSourceRow);
             const bad = municipal.filter(r => (r['Source'] || '').trim() !== sourceName);
             if (bad.length > 0) municipal = [];
             else if (dataRejected && municipal.length > 0 && updateMsg) updateMsg.textContent = `${municipal.length} ${sourceName} tenders (from CSV - API returned wrong data)`;
@@ -1088,7 +1101,7 @@ if (runMunicipalScraperBtn) {
         const csvFilename = (data && data.csvFilename) || `${municipality}_tenders.csv`;
         const sourceName = municipalSourceById[municipality] || municipalScraperSel?.selectedOptions?.[0]?.textContent || municipality;
         try {
-          const csvData = await loadCsv(`/data/${csvFilename}?t=${Date.now()}`);
+          const csvData = (await loadCsv(`/data/${csvFilename}?t=${Date.now()}`)).filter(isLikelyMunicipalSourceRow);
           const bad = csvData.filter(r => (r['Source'] || '').trim() !== sourceName);
           if (bad.length === 0 && csvData.length > 0) {
             hideDashboard();
@@ -1195,7 +1208,7 @@ if (installBtn) {
         try {
           const data = await loadCsv(`/data/${csv}`).catch(() => []);
           if (data && data.length) {
-            municipal = municipal.concat(data);
+            municipal = municipal.concat(data.filter(isLikelyMunicipalSourceRow));
             console.log(`Loaded ${data.length} from ${csv}`);
           }
         } catch (_) {}
@@ -1206,7 +1219,7 @@ if (installBtn) {
         try {
           const data = await loadCsv(`/data/${csv}`).catch(() => []);
           if (data && data.length) {
-            municipal = municipal.concat(data);
+            municipal = municipal.concat(data.filter(isLikelyMunicipalSourceRow));
             console.log(`Loaded ${data.length} from ${csv}`);
           }
         } catch (_) {}
@@ -1229,7 +1242,7 @@ if (installBtn) {
   }
 
   // Municipal rows: use advertised data when available, but keep municipal Source URL and Source
-  const municipalMerged = municipal.map(m => {
+  const municipalMerged = municipal.filter(isLikelyMunicipalSourceRow).map(m => {
     const n = (m['Tender Number'] || '').trim();
     const a = advMunicipal.get(n);
     const source = m['Source'] || 'Matjhabeng';

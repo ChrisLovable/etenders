@@ -5,8 +5,9 @@ const CFG = {
   shortName: 'Langeberg',
   organOfState: 'Langeberg Municipality',
   place: 'Langeberg',
-  baseUrl: 'http://langeberg.gov.za',
-  urls: ['http://langeberg.gov.za/notices/procurement/tender-advertisements.html'],
+  baseUrl: 'https://langeberg.gov.za',
+  forceSourceUrl: 'https://langeberg.gov.za/notices/procurement/tender-advertisements.html',
+  urls: ['https://langeberg.gov.za/notices/procurement/tender-advertisements.html'],
   csvFilename: 'langeberg_tenders.csv',
   linkSelector: 'a[href], .docman_document',
   contextSelector: '.docman_document, article, li, div'

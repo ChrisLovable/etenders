@@ -6,6 +6,7 @@ const CFG = {
   organOfState: 'Bergrivier Municipality',
   place: 'Bergrivier',
   baseUrl: 'https://www.bergmun.org.za',
+  forceSourceUrl: 'https://www.bergmun.org.za/tenders-quotations-available',
   urls: ['https://www.bergmun.org.za/tenders-quotations-available'],
   csvFilename: 'bergrivier_tenders.csv',
   linkSelector: 'a[href]',

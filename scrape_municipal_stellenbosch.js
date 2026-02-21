@@ -5,8 +5,9 @@ const CFG = {
   shortName: 'Stellenbosch',
   organOfState: 'Stellenbosch Municipality',
   place: 'Stellenbosch',
-  baseUrl: 'https://www.stellenbosch.gov.za',
-  urls: ['https://www.stellenbosch.gov.za/open-tenders/'],
+  baseUrl: 'https://stellenbosch.gov.za',
+  urls: ['https://stellenbosch.gov.za/open-tenders/'],
+  forceSourceUrl: 'https://stellenbosch.gov.za/open-tenders/',
   csvFilename: 'stellenbosch_tenders.csv',
   linkSelector: 'a[href], article, tr',
   contextSelector: 'article, tr, li, div'

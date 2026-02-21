@@ -6,7 +6,8 @@ const CFG = {
   organOfState: 'Swartland Municipality',
   place: 'Swartland',
   baseUrl: 'https://swartland.org.za',
-  urls: ['https://swartland.org.za/tenders?status=open&tender_type=formal'],
+  urls: ['https://swartland.org.za/tenders?status=null&tender_type=formal'],
+  forceSourceUrl: 'https://swartland.org.za/tenders?status=null&tender_type=formal',
   csvFilename: 'swartland_tenders.csv',
   linkSelector: 'a[href], tr, li',
   contextSelector: 'tr, table, article, li, div'

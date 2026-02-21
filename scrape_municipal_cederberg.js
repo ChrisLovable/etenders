@@ -6,6 +6,7 @@ const CFG = {
   organOfState: 'Cederberg Municipality',
   place: 'Cederberg',
   baseUrl: 'http://cederbergmun.gov.za',
+  forceSourceUrl: 'http://cederbergmun.gov.za/tenders-quotations-available-0',
   urls: ['http://cederbergmun.gov.za/tenders-quotations-available-0'],
   csvFilename: 'cederberg_tenders.csv',
   linkSelector: 'a[href]',
