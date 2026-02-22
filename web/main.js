@@ -1216,6 +1216,27 @@ const municipalCsvFallback = [
 const municipalOrgans = Object.values(municipalSourceById);
 const municipalSourceSet = new Set(municipalOrgans);
 
+// Lazy-load: cache municipal data per municipality; csvFilename map from API
+const municipalDataCache = new Map();
+let municipalIdToCsv = new Map();
+let advMunicipal = new Map(); // Built on init for merging municipal rows with advertised data
+
+async function loadMunicipalData(municipalityId) {
+  if (municipalDataCache.has(municipalityId)) {
+    return municipalDataCache.get(municipalityId);
+  }
+  const csvFilename = municipalIdToCsv.get(municipalityId) || `${municipalityId}_tenders.csv`;
+  try {
+    const data = await loadCsv(`/data/${csvFilename}`).catch(() => []);
+    const filtered = Array.isArray(data) ? data.filter(isLikelyMunicipalSourceRow) : [];
+    municipalDataCache.set(municipalityId, filtered);
+    return filtered;
+  } catch (err) {
+    console.warn(`Failed to load ${municipalityId} data:`, err);
+    return [];
+  }
+}
+
 function municipalityToken(v) {
   return String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 }
@@ -1239,13 +1260,15 @@ async function loadMunicipalScrapers(province = '') {
     const data = await res.json();
     if (res.ok && data.ok && municipalScraperSel) {
       municipalScraperSel.innerHTML = '<option value="">Select Municipality</option>';
-      (data.scrapers || []).forEach(s => {
+      const scrapers = data.scrapers || [];
+      scrapers.forEach(s => {
+        municipalIdToCsv.set(s.id, s.csvFilename || `${s.id}_tenders.csv`);
         const opt = document.createElement('option');
         opt.value = s.id;
         opt.textContent = s.shortName;
         municipalScraperSel.appendChild(opt);
       });
-      if (currentValue && (data.scrapers || []).some(s => s.id === currentValue)) {
+      if (currentValue && scrapers.some(s => s.id === currentValue)) {
         municipalScraperSel.value = currentValue;
       }
       updateMunicipalSearchButtonState();
@@ -1266,39 +1289,33 @@ if (municipalScraperSel) {
   });
 }
 
-function runMunicipalScopedSearch() {
+async function runMunicipalScopedSearch() {
   const municipality = municipalScraperSel?.value || '';
   const selectedProvince = provinceSel?.value || '';
   const sourceName = municipality
     ? (municipalSourceById[municipality] || municipalScraperSel?.selectedOptions?.[0]?.textContent || municipality)
     : '';
-  const sourceNameLc = String(sourceName || '').toLowerCase();
-  const sourceNameTok = municipalityToken(sourceName);
-  const municipalityTok = municipalityToken(municipality);
 
-  // When a municipality is selected, only show rows from our municipal scraped CSVs
-  // (Source matches the municipality). Do NOT include advertised eTenders rows that
-  // merely have matching Organ Of State (e.g. "City of Cape Town").
-  const matchesSelectedMunicipality = (r) => {
-    if (!municipality) return true;
-    const src = String(r['Source'] || '').trim();
-    const srcTok = municipalityToken(src);
-    if (src === sourceName) return true;
-    if (srcTok === sourceNameTok || srcTok === municipalityTok) return true;
-    if (sourceNameLc && src.toLowerCase().includes(sourceNameLc)) return true;
-    return false;
-  };
+  if (!municipality) return;
 
-  let municipal = rows.filter(r => {
-    const src = String(r['Source'] || '').trim();
-    const organ = String(r['Organ Of State'] || '');
-    const category = String(r['Category'] || '').trim().toLowerCase();
-    const isMunicipal = municipalSourceSet.has(src) || category === 'municipal';
-    if (!municipality && !isMunicipal) return false;
-    if (selectedProvince && String(r['Province'] || '') !== selectedProvince) return false;
-    if (!matchesSelectedMunicipality(r)) return false;
-    return true;
+  // Lazy-load: fetch this municipality's data on demand
+  let municipal = await loadMunicipalData(municipality);
+
+  // Merge with advertised data when tender number matches (enrich with eTenders details)
+  municipal = municipal.map(m => {
+    const n = (m['Tender Number'] || '').trim();
+    const a = advMunicipal.get(n);
+    const source = m['Source'] || sourceName;
+    if (a && a['Tender Description'] && !String(a['Tender Description'] || '').includes('(see document)')) {
+      return { ...a, 'Source URL': m['Source URL'] || a['Source URL'], 'Source': source };
+    }
+    return m;
   });
+
+  if (selectedProvince) {
+    municipal = municipal.filter(r => String(r['Province'] || '') === selectedProvince);
+  }
+
   if (municipal.length === 0) {
     municipalScrapeView = null;
     if (updateMsg) updateMsg.textContent = '';
@@ -1321,10 +1338,10 @@ if (searchMunicipalBtn) {
     if (!municipality) return;
     const prevMsg = updateMsg?.textContent || '';
     const selectedName = municipalScraperSel?.selectedOptions?.[0]?.textContent || municipality;
-    setButtonLoading(searchMunicipalBtn, true, 'Scraping...');
-    showLoading(`Scraping ${selectedName}...`);
+    setButtonLoading(searchMunicipalBtn, true, 'Loading...');
+    showLoading(`Loading ${selectedName} tenders...`);
     try {
-      runMunicipalScopedSearch();
+      await runMunicipalScopedSearch();
     } finally {
       setButtonLoading(searchMunicipalBtn, false);
       hideLoading();
@@ -1351,6 +1368,11 @@ if (updateBtn) {
             skipEmptyLines: true,
             complete: ({ data }) => {
               rows = data;
+              advMunicipal.clear();
+              rows.filter(r => municipalOrgans.some(name => (r['Organ Of State'] || '').includes(name))).forEach(r => {
+                const n = (r['Tender Number'] || '').trim();
+                if (n) advMunicipal.set(n, r);
+              });
               buildFilters(rows);
               filterRows();
             }
@@ -1416,42 +1438,18 @@ if (installBtn) {
     adv = [];
   }
 
-  // Load each municipality's own CSV (matjhabeng_tenders.csv, mangaung_tenders.csv, etc.)
+  // Load all-inclusive municipal CSV (merged from all municipalities - searchable in "Search all")
   let municipal = [];
   try {
-    const listRes = await fetch('/api/scrape/municipal/list').catch(() => null);
-    if (listRes && listRes.ok) {
-      const listData = await listRes.json();
-      const scrapers = listData.ok && listData.scrapers ? listData.scrapers : [];
-      let csvFiles = scrapers.map(s => s.csvFilename).filter(Boolean);
-      if (csvFiles.length === 0) csvFiles = municipalCsvFallback;
-      for (const csv of csvFiles) {
-        try {
-          const data = await loadCsv(`/data/${csv}`).catch(() => []);
-          if (data && data.length) {
-            municipal = municipal.concat(data.filter(isLikelyMunicipalSourceRow));
-            console.log(`Loaded ${data.length} from ${csv}`);
-          }
-        } catch (_) {}
-      }
-    } else {
-      // Fallback - try to load known files
-      for (const csv of municipalCsvFallback) {
-        try {
-          const data = await loadCsv(`/data/${csv}`).catch(() => []);
-          if (data && data.length) {
-            municipal = municipal.concat(data.filter(isLikelyMunicipalSourceRow));
-            console.log(`Loaded ${data.length} from ${csv}`);
-          }
-        } catch (_) {}
-      }
-    }
-  } catch (_) {
-    console.warn('Could not load municipal CSVs');
+    const data = await loadCsv('/data/all_municipal_tenders.csv').catch(() => []);
+    municipal = Array.isArray(data) ? data.filter(isLikelyMunicipalSourceRow) : [];
+    console.log(`Loaded ${municipal.length} municipal tenders (all municipalities)`);
+  } catch (e) {
+    console.warn('Could not load all_municipal_tenders.csv - Search all will exclude municipal tenders', e);
   }
 
-  // Build map of advertised municipal tenders by tender number (Matjhabeng, Mangaung, etc.)
-  const advMunicipal = new Map();
+  // Build map of advertised municipal tenders for merging
+  advMunicipal.clear();
   if (adv.length) {
     adv.filter(r => {
       const organ = (r['Organ Of State'] || '');
@@ -1463,24 +1461,21 @@ if (installBtn) {
   }
 
   // Municipal rows: use advertised data when available, but keep municipal Source URL and Source
-  const municipalMerged = municipal.filter(isLikelyMunicipalSourceRow).map(m => {
+  const municipalMerged = municipal.map(m => {
     const n = (m['Tender Number'] || '').trim();
     const a = advMunicipal.get(n);
-    const source = m['Source'] || 'Matjhabeng';
-    if (a && a['Tender Description'] && !a['Tender Description'].includes('(see document)')) {
+    const source = m['Source'] || '';
+    if (a && a['Tender Description'] && !String(a['Tender Description'] || '').includes('(see document)')) {
       return { ...a, 'Source URL': m['Source URL'] || a['Source URL'], 'Source': source };
     }
     return m;
   });
 
-  // Deduplicate: adv (non-municipal) + advertised municipal not in our scraped list + municipal merged
   const municipalTenderNumbers = new Set(municipalMerged.map(m => (m['Tender Number'] || '').trim()).filter(Boolean));
-
   const advNonMunicipal = adv.length ? adv.filter(r => {
     const organ = (r['Organ Of State'] || '');
     return !municipalOrgans.some(name => organ.includes(name));
   }) : [];
-
   const advMunicipalFiltered = adv.length ? adv.filter(r => {
     const organ = (r['Organ Of State'] || '');
     const isMunicipal = municipalOrgans.some(name => organ.includes(name));
@@ -1488,7 +1483,7 @@ if (installBtn) {
   }) : [];
 
   rows = [...advNonMunicipal, ...advMunicipalFiltered, ...municipalMerged];
-  console.log(`Total rows loaded: ${rows.length}`);
+  console.log(`Total rows loaded: ${rows.length} (advertised + municipal)`);
 
   const mode = getMatchMode();
   document.querySelectorAll('input[name="mainMatchMode"]').forEach(r => { r.checked = (r.value === mode); });

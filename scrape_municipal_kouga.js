@@ -9,8 +9,8 @@ const cheerio = require('cheerio');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const path = require('path');
 
-const BASE_URL = 'https://kouga.gov.za';
-const TENDERS_BASE = `${BASE_URL}/tenders`;
+const BASE_URL = 'https://www.kouga.gov.za';
+const TENDERS_BASE = 'https://www.kouga.gov.za/tenders';
 const MAX_PAGES = 2; // First 2 pages only (user requested)
 const DELAY_MS = 800;
 
@@ -134,7 +134,7 @@ function toCsvRow(row) {
     'Briefing Venue': '',
     'eSubmission': '',
     'Two Envelope Submission': '',
-    'Source URL': row.sourceUrl || '',
+    'Source URL': TENDERS_BASE,
     'Tender ID': '',
     'Source': 'Kouga'
   };

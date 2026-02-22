@@ -5,7 +5,7 @@ const qs = require('querystring');
 
 async function fetchCancelledTendersPage(page = 1) {
 	// Cancelled tenders listing (HTML fallback only)
-	const url = `https://www.etenders.gov.za/Home/opportunities?id=3&page=${page}`;
+	const url = `https://etenders.gov.za/Home/opportunities?id=3&page=${page}`;
 	const response = await axios.get(url, {
 		headers: {
 			'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36'
@@ -90,12 +90,12 @@ function opportunityIdForStatus(status) {
 
 async function scrapeViaApi(status = 4) {
 	const oppId = opportunityIdForStatus(status);
-	const baseUrl = 'https://www.etenders.gov.za/Home/PaginatedTenderOpportunities';
+	const baseUrl = 'https://etenders.gov.za/Home/PaginatedTenderOpportunities';
 	const headers = {
 		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
 		'Accept': 'application/json, text/javascript, */*; q=0.01',
 		'X-Requested-With': 'XMLHttpRequest',
-		'Referer': 'https://www.etenders.gov.za/Home/opportunities?id=3'
+		'Referer': 'https://etenders.gov.za/Home/opportunities?id=3'
 	};
 
 	const length = 200; // fetch 200 rows per request
@@ -120,7 +120,7 @@ async function scrapeViaApi(status = 4) {
 			let contactPerson = '', email = '', telephone = '', fax = '';
 			let briefingSession = '', briefingCompulsory = '', briefingDateTime = '', briefingVenue = '';
 			let eSubmission = '', twoEnvelopeSubmission = '';
-			let tenderId = '', sourceUrl = 'https://www.etenders.gov.za/Home/opportunities?id=1';
+			let tenderId = '', sourceUrl = 'https://etenders.gov.za/Home/opportunities?id=1';
 			if (Array.isArray(row)) {
 				// Columns expected:
 				// 0: plus icon, 1: Category, 2: Tender Description, 3: eSubmission, 4: Advertised, 5: Cancelled, 6: icons
@@ -135,7 +135,7 @@ async function scrapeViaApi(status = 4) {
 				cancelled = formatDate(row.cancelled_Date || row.cancelled || row.Cancelled || '');
 				tenderNumber = stripText(row.tender_No || row.tenderNo || row['tender_No'] || row['Tender No'] || '');
 				tenderId = row.id ? String(row.id) : '';
-				const baseOppUrl = `https://www.etenders.gov.za/Home/opportunities?id=${oppId}`;
+				const baseOppUrl = `https://etenders.gov.za/Home/opportunities?id=${oppId}`;
 				sourceUrl = tenderId
 					? `/tender/${tenderId}`
 					: (tenderNumber ? `${baseOppUrl}&search=${encodeURIComponent(tenderNumber)}` : baseOppUrl);

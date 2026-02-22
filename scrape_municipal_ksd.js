@@ -1,15 +1,15 @@
 /**
- * West Coast District Municipality tender/quotation scraper
- * Parses WordPress Download Manager tables - data-downloadurl for PDF links
- * Source: https://westcoastdm.co.za/tenders-quotations/
+ * King Sabata Dalindyebo (KSD) Local Municipality tender scraper
+ * Listing: ksd.gov.za/procurements/tenders/
+ * Structure: Links to bid opening registers, awarded tenders, addendums, cancelled tenders
+ * Note: Open tender adverts may be JS-rendered; this scraper collects all procurement documents
  */
 const axios = require('axios');
 const cheerio = require('cheerio');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const path = require('path');
 
-const BASE_URL = 'https://westcoastdm.co.za';
-const TENDERS_URL = `${BASE_URL}/tenders-quotations/`;
+const LISTING_URL = 'https://ksd.gov.za/procurements/tenders/';
 
 const CSV_HEADER = [
   { id: 'Category', title: 'Category' },
@@ -37,64 +37,55 @@ const CSV_HEADER = [
   { id: 'Source', title: 'Source' }
 ];
 
-const SKIP_TITLES = /conditions\s+for\s+procurement|declaration\s+(for|of|certificate)|preferential\s+procurement|MBD\s*[0-9]|MDB\s*[0-9]|form\s*\(|certificate\s+of\s+(independent|local)|general\s+conditions|notice\s+to\s+all\s+suppliers|tcs\s+press|preference\s+points\s+claim|formal\s+quotation\s+awards|tender\s+awards|quotation\s+awards|quotation\s+award\s/i;
-
-function normalizeWhitespace(text) {
-  return String(text || '').replace(/\s+/g, ' ').trim();
-}
-
-function extractTenderNumber(title) {
-  const t = normalizeWhitespace(title);
-  const wdm = t.match(/WDM\s*(\d+)\/(\d{4})/i);
-  if (wdm) return `WDM ${wdm[1]}/${wdm[2]}`;
-  const ref = t.match(/(\d\/\d\/\d\/\d+)/);
-  if (ref) return ref[1];
+function extractTenderNumber(text) {
+  const m = String(text || '').match(/SCM\s*NO:?\s*(\d+\/\d{4}\/\d{2})|(\d{3}\/\d{4}\/\d{2})|BID\s*NO\.?\s*(\d+\/\d+)/i);
+  if (m) return (m[1] || m[2] || m[3] || '').trim();
   return '';
 }
 
 async function runScraper(opts = {}) {
-  const outDir = opts.outDir ?? __dirname;
-  const csvFilename = opts.csvFilename ?? 'westcoastdm_tenders.csv';
+  const outDir = opts.outDir || __dirname;
+  const csvFilename = opts.csvFilename || 'ksd_tenders.csv';
   const outPath = path.join(outDir, csvFilename);
+  const limit = Number.isFinite(opts.limit) ? opts.limit : 500;
 
-  const { data: html } = await axios.get(TENDERS_URL, {
-    timeout: 25000,
-    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-  });
+  console.log('\n🔍 SCRAPING KING SABATA DALINDYEBO MUNICIPALITY TENDERS');
+  console.log('=======================================================');
+
+  const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
+  const { data: html } = await axios.get(LISTING_URL, { timeout: 30000, headers });
+
   const $ = cheerio.load(html);
-  const rows = [];
   const seen = new Set();
+  const entries = [];
 
-  $('[data-downloadurl]').each((_, el) => {
-    const downloadUrl = $(el).attr('data-downloadurl');
-    if (!downloadUrl) return;
-    const tr = $(el).closest('tr');
-    const title = normalizeWhitespace(tr.find('td').first().text()) || normalizeWhitespace($(el).text());
-    if (!title || title.length < 15) return;
-    if (SKIP_TITLES.test(title)) return;
+  $('a[href*="/download/procurements/"]').each((_, a) => {
+    const href = $(a).attr('href');
+    const title = $(a).text().trim().replace(/\s+/g, ' ');
+    if (!href || !title || title.length < 8 || seen.has(href)) return;
+    seen.add(href);
 
-    const key = `${title.slice(0, 80)}|${downloadUrl}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-
+    const link = href.startsWith('http') ? href : `https://ksd.gov.za${href.startsWith('/') ? '' : '/'}${href}`;
     const tenderNumber = extractTenderNumber(title);
-    rows.push({
-      tenderNumber: tenderNumber || title.slice(0, 50),
+
+    entries.push({
+      tenderNumber: tenderNumber || `KSD-${String(entries.length + 1).padStart(3, '0')}`,
       description: title.slice(0, 500),
-      sourceUrl: downloadUrl
+      link
     });
   });
 
-  const csvRows = rows.map(r => ({
+  const sliced = entries.slice(0, limit);
+  const csvRows = sliced.map((e, i) => ({
     'Category': 'Municipal',
-    'Tender Number': r.tenderNumber,
-    'Tender Description': r.description,
+    'Tender Number': e.tenderNumber || `KSD-${String(i + 1).padStart(3, '0')}`,
+    'Tender Description': e.description,
     'Advertised': '',
     'Closing': '',
-    'Organ Of State': 'West Coast District Municipality',
+    'Organ Of State': 'King Sabata Dalindyebo Local Municipality',
     'Tender Type': 'Request for Bid',
-    'Province': 'Western Cape',
-    'Place where goods, works or services are required': 'West Coast District',
+    'Province': 'Eastern Cape',
+    'Place where goods, works or services are required': 'Mthatha, Mqanduli',
     'Special Conditions': '',
     'Contact Person': '',
     'Email': '',
@@ -106,21 +97,24 @@ async function runScraper(opts = {}) {
     'Briefing Venue': '',
     'eSubmission': '',
     'Two Envelope Submission': '',
-    'Source URL': r.sourceUrl,
+    'Source URL': e.link,
     'Tender ID': '',
-    'Source': 'West Coast DM'
+    'Source': 'King Sabata Dalindyebo'
   }));
 
   const csvWriter = createCsvWriter({ path: outPath, header: CSV_HEADER });
   await csvWriter.writeRecords(csvRows);
+
   return { rows: csvRows.length, data: csvRows, message: `Wrote ${csvRows.length} rows to ${csvFilename}` };
 }
 
 if (require.main === module) {
-  runScraper().then(r => console.log(r.message)).catch(err => {
-    console.error(err.message);
-    process.exit(1);
-  });
+  runScraper()
+    .then(r => console.log(r.message))
+    .catch(err => {
+      console.error(err.message);
+      process.exit(1);
+    });
 }
 
 module.exports = { runScraper };
