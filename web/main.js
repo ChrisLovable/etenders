@@ -556,7 +556,8 @@ function createCard(r){
     viewBtn.rel = 'noopener noreferrer';
     viewBtn.className = 'btn primary sm view-source';
     const municipalHasValidSource = isMunicipal && hasSourceUrl && !isEtendersSourceUrl;
-    viewBtn.textContent = isMunicipal ? (municipalHasValidSource ? 'View source details' : 'Source unavailable') : 'View on eTenders';
+    const viewText = isMunicipal ? (municipalHasValidSource ? 'View source details' : 'Source unavailable') : 'View on eTenders';
+    viewBtn.innerHTML = `<i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i> ${viewText}`;
     if (isMunicipal && !municipalHasValidSource) {
       viewBtn.classList.add('btn-disabled');
       viewBtn.addEventListener('click', (e) => e.preventDefault());
@@ -691,7 +692,7 @@ function createCard(r){
     // Add comment button inline with flags
     const commentBtn = document.createElement('button');
     commentBtn.className='btn primary sm';
-    commentBtn.textContent='Add comment';
+    commentBtn.innerHTML='<i class="fa-solid fa-comment" aria-hidden="true"></i> Add comment';
     flags.appendChild(iLabel); flags.appendChild(rLabel); flags.appendChild(tLabel); flags.appendChild(niLabel); flags.appendChild(commentBtn);
     card.appendChild(flags);
 
@@ -702,8 +703,8 @@ function createCard(r){
     textarea.placeholder = 'Write a short note for this tender...';
     const commentActions = document.createElement('div');
     commentActions.className='actions';
-    const saveComment = document.createElement('button'); saveComment.className='btn primary'; saveComment.textContent='Save';
-    const cancelComment = document.createElement('button'); cancelComment.className='btn'; cancelComment.textContent='Cancel';
+    const saveComment = document.createElement('button'); saveComment.className='btn primary'; saveComment.innerHTML='<i class="fa-solid fa-check" aria-hidden="true"></i> Save';
+    const cancelComment = document.createElement('button'); cancelComment.className='btn'; cancelComment.innerHTML='<i class="fa-solid fa-xmark" aria-hidden="true"></i> Cancel';
     commentActions.appendChild(saveComment); commentActions.appendChild(cancelComment);
     commentWrap.appendChild(textarea); commentWrap.appendChild(commentActions);
     card.appendChild(commentWrap);
@@ -955,7 +956,7 @@ function renderEmployeeList(){
         <div class="emp-name">${escapeHtml(e.name)}</div>
         <div class="emp-details">${escapeHtml(e.email)}${e.phone ? ' · ' + escapeHtml(e.phone) : ''}${e.employeeNumber ? ' · #' + escapeHtml(e.employeeNumber) : ''}</div>
       </div>
-      <button type="button" class="btn danger sm emp-remove" data-id="${escapeHtml(e.id)}" title="Remove">Remove</button>
+      <button type="button" class="btn primary sm emp-remove" data-id="${escapeHtml(e.id)}" title="Remove"><i class="fa-solid fa-trash" aria-hidden="true"></i> Remove</button>
     `;
     li.querySelector('.emp-remove').addEventListener('click', async () => {
       try {
@@ -992,6 +993,27 @@ $('employeeGroupForm')?.addEventListener('submit', async (e) => {
   } catch (_) { alert('Failed to add member'); }
 });
 $('searchBtn')?.addEventListener('click', async ()=>{ await runWithBusy('Searching tenders...', async ()=>{ hideDashboard(); municipalScrapeView = null; if (provinceSel) provinceSel.value = ''; setProvinceRadioValue(''); const muniSel = $('municipalScraperSel'); if (muniSel) muniSel.value = ''; if (typeof updateMunicipalSearchButtonState === 'function') updateMunicipalSearchButtonState(); filterRows(); }, $('searchBtn'), 'Searching...'); });
+
+$('showAllBtn')?.addEventListener('click', async () => {
+  await runWithBusy('Showing all tenders...', () => {
+    hideDashboard();
+    municipalScrapeView = null;
+    setSearchValue('');
+    if (qInput) qInput.value = '';
+    if (organSel) organSel.value = '';
+    if (categorySel) categorySel.value = '';
+    if (advRange) advRange.value = 'any';
+    if (provinceSel) provinceSel.value = '';
+    setProvinceRadioValue('');
+    const muniSel = $('municipalScraperSel');
+    if (muniSel) muniSel.value = '';
+    if (typeof updateMunicipalSearchButtonState === 'function') updateMunicipalSearchButtonState();
+    const inputWrap = document.querySelector('.input-clearable');
+    if (inputWrap) inputWrap.classList.remove('has-text');
+    filterRows();
+  }, $('showAllBtn'), 'Show all');
+});
+
 {
   const searchClearBtn = $('searchClearBtn');
   const inputWrap = document.querySelector('.input-clearable');
@@ -1099,7 +1121,7 @@ window.addEventListener('resize', () => {
 window.addEventListener('load', () => requestAnimationFrame(syncHeroOffset));
 
 // Tab switching: Tenders | Add a Tender | Employee groups | Dashboard | My tenders
-const tabToPanel = { tenders: 'tabTenders', add: 'tabAdd', employees: 'tabEmployees', dashboard: 'tabDashboard', mytenders: 'tabMyTenders', watchalerts: 'tabWatchAlerts' };
+const tabToPanel = { tenders: 'tabTenders', add: 'tabAdd', employees: 'tabEmployees', dashboard: 'tabDashboard', mytenders: 'tabMyTenders', watchalerts: 'tabWatchAlerts', notifications: 'tabNotifications' };
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
     const tab = btn.dataset.tab;

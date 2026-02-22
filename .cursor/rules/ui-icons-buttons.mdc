@@ -1,0 +1,29 @@
+---
+description: UI conventions for icons and buttons in eTenders Explorer
+globs: web/**/*.{html,js,css}
+alwaysApply: false
+---
+
+# Icons and Buttons
+
+## Icons
+- All icons use the accent green color (`var(--accent)` / #00e5a8) to match the tab icons.
+- Icons are styled via: `.btn i`, `.icon-prefix`, `.collapsible-icon`, `.tab-btn i`, `.notification-card h3 i`.
+
+## Buttons
+- **Every button must have an icon** (Font Awesome 6) before the label.
+- Use `aria-hidden="true"` on decorative icons.
+- Icon + text format: `<i class="fa-solid fa-icon-name" aria-hidden="true"></i> Label`
+
+### Common icon mappings
+- Update/Refresh: `fa-arrows-rotate`
+- Search: `fa-magnifying-glass`
+- Show all/List: `fa-list`
+- Clear/Delete: `fa-trash`
+- Settings/Filter: `fa-sliders`
+- Add user: `fa-user-plus`
+- Save/Confirm: `fa-check`
+- Cancel: `fa-xmark`
+- External link: `fa-up-right-from-square`
+- Comment: `fa-comment`
+- Copy: `fa-copy`

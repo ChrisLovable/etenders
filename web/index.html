@@ -18,18 +18,19 @@
   <header class="app-header">
     <div class="left">
       <img src="/assets/logo.png" alt="Proper Consulting Engineers" class="logo" />
-      <button id="updateBtn" class="btn primary lg">Update Latest</button>
+      <button id="updateBtn" class="btn primary lg"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Update Latest</button>
       <div class="titles"></div>
     </div>
   </header>
 
   <nav class="tab-bar" role="tablist">
-    <button type="button" class="tab-btn active" role="tab" aria-selected="true" data-tab="tenders">Tenders</button>
-    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="add">Add a Tender</button>
-    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="employees">Employee groups</button>
-    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="dashboard">Dashboard</button>
-    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="mytenders">My tenders</button>
-    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="watchalerts">Watch alerts</button>
+    <button type="button" class="tab-btn active" role="tab" aria-selected="true" data-tab="tenders"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search tenders</button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="add"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add a Tender</button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="employees"><i class="fa-solid fa-users" aria-hidden="true"></i> Employee groups</button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="dashboard"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Dashboard</button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="mytenders"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> My tenders</button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="watchalerts"><i class="fa-solid fa-bell" aria-hidden="true"></i> Watch alerts</button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="notifications"><i class="fa-solid fa-envelope" aria-hidden="true"></i> Notifications</button>
   </nav>
   </div>
 
@@ -68,7 +69,8 @@
           <label><input type="radio" name="mainMatchMode" value="all" /> Match all criteria ("AND")</label>
           <label><input type="radio" name="mainMatchMode" value="expansive" checked /> Inclusive ("OR")</label>
         </div>
-        <button id="searchBtn" class="btn primary lg"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
+        <button id="searchBtn" class="btn primary md"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
+        <button id="showAllBtn" class="btn primary md" title="Clear filters and show all tenders"><i class="fa-solid fa-list" aria-hidden="true"></i> Show all</button>
       </div>
     </div>
     <div class="top-split">
@@ -103,13 +105,13 @@
     <div class="custom-search-container collapsible collapsed" id="customSearchCollapsible">
       <button type="button" class="collapsible-header" aria-expanded="false" aria-controls="customSearchContent">
         <i class="fa-solid fa-chevron-down collapsible-icon" aria-hidden="true"></i>
-        <span class="panel-title">Custom Search</span>
+        <span class="panel-title">Custom Search & Watch Alerts</span>
       </button>
       <div class="collapsible-content" id="customSearchContent">
       <div class="custom-search-buttons">
-        <button id="clearCustomCriteriaBtnMain" class="btn danger md" title="Clear saved custom criteria">Clear Custom Criteria</button>
-        <button id="customCriteriaBtn" class="btn secondary md" title="Set your saved search criteria">Custom criteria</button>
-        <button id="searchMyCriteriaBtn" class="btn primary md" title="Search using your saved criteria">Search my criteria</button>
+        <button id="clearCustomCriteriaBtnMain" class="btn primary md" title="Clear saved custom criteria"><i class="fa-solid fa-trash" aria-hidden="true"></i> Clear Custom Criteria</button>
+        <button id="customCriteriaBtn" class="btn primary md" title="Set your saved search criteria"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Custom criteria</button>
+        <button id="searchMyCriteriaBtn" class="btn primary md" title="Search using your saved criteria"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search my criteria</button>
         <div id="customCriteriaSummary" class="muted custom-criteria-summary">No custom criteria set</div>
         <span id="updateMsg" class="muted custom-search-msg"></span>
       </div>
@@ -124,8 +126,6 @@
 
   <div id="tabEmployees" class="tab-panel" role="tabpanel" aria-hidden="true">
     <div class="employee-tab-content">
-      <h2 class="employee-tab-heading">Employee group</h2>
-      <p class="muted" style="margin-bottom:16px">Add members to receive notifications (email, phone).</p>
       <form id="employeeGroupForm" class="employee-form">
         <div class="form-row">
           <label class="form-label">Name <span class="required">*</span></label>
@@ -143,7 +143,7 @@
           <label class="form-label">Employee number</label>
           <input type="text" id="empNumber" class="input" placeholder="e.g. EMP001" />
         </div>
-        <button type="submit" class="btn primary">Add member</button>
+        <button type="submit" class="btn primary"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Add member</button>
       </form>
       <div class="employee-list-wrap">
         <h3 class="employee-list-title">Members (<span id="employeeCount">0</span>)</h3>
@@ -154,9 +154,6 @@
 
   <div id="tabDashboard" class="tab-panel" role="tabpanel" aria-hidden="true">
     <div class="dashboard" id="dashboardSection">
-      <div class="dashboard-header">
-        <h2>Senior reviewer dashboard</h2>
-      </div>
       <div class="dashboard-stats" id="dashboardStats"></div>
       <div class="dashboard-sections" id="dashboardSections"></div>
     </div>
@@ -164,7 +161,6 @@
 
   <div id="tabMyTenders" class="tab-panel" role="tabpanel" aria-hidden="true">
     <div class="my-tenders-content">
-      <div class="panel-title">Filter my tenders</div>
       <div class="show-inline" id="showInline">
         <label class="show-option"><input type="checkbox" id="showAll" checked /> Show all</label>
         <label class="show-option"><input type="checkbox" id="showInterested" /> Interested</label>
@@ -177,20 +173,31 @@
 
   <div id="tabWatchAlerts" class="tab-panel" role="tabpanel" aria-hidden="true">
     <div class="watch-alerts-content">
-      <div class="watch-alerts-header">
-        <h2 class="watch-alerts-title"><i class="fa-solid fa-bell" aria-hidden="true"></i> Watch alerts</h2>
-        <p class="watch-alerts-desc">New tenders matching your saved custom criteria (last 7 days). Set up criteria in the Tenders tab to see alerts here.</p>
-        <div class="watch-alerts-controls">
-          <select id="watchAlertsRange" class="select" title="How far back to look">
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-          </select>
-          <button type="button" id="refreshWatchAlertsBtn" class="btn primary md"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh</button>
-        </div>
+      <div class="watch-alerts-controls">
+        <select id="watchAlertsRange" class="select" title="How far back to look">
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+          <option value="90d">Last 90 days</option>
+        </select>
+        <button type="button" id="refreshWatchAlertsBtn" class="btn primary md"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh</button>
       </div>
       <div id="watchAlertsEmpty" class="watch-alerts-empty muted" style="display:none">
-        <p>No custom criteria set. Go to the <strong>Tenders</strong> tab, expand <strong>Custom Search</strong>, and click <strong>Custom criteria</strong> to save your watch rules.</p>
+        <p>No custom criteria set. Go to the <strong>Search tenders</strong> tab, expand <strong>Custom Search & Watch Alerts</strong>, and click <strong>Custom criteria</strong> to save your watch rules.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="tabNotifications" class="tab-panel" role="tabpanel" aria-hidden="true">
+    <div class="notifications-content">
+      <div class="notifications-body">
+        <div class="notification-card">
+          <h3><i class="fa-solid fa-users" aria-hidden="true"></i> Recipients</h3>
+          <p class="muted">Add team members in the <strong>Employee groups</strong> tab to receive notifications by email or phone when new tenders match your criteria.</p>
+        </div>
+        <div class="notification-card">
+          <h3><i class="fa-solid fa-eye" aria-hidden="true"></i> Watch alerts</h3>
+          <p class="muted">Set up custom criteria in the <strong>Search tenders</strong> tab, then use the <strong>Watch alerts</strong> tab to see new tenders matching your rules.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -251,9 +258,9 @@
           </select>
         </div>
         <div class="modal-actions">
-          <button type="submit" class="btn primary md">Save criteria</button>
-          <button type="button" id="clearCustomCriteriaBtn" class="btn danger md">Clear Custom Criteria</button>
-          <button type="button" class="btn secondary modal-close-btn">Cancel</button>
+          <button type="submit" class="btn primary md"><i class="fa-solid fa-check" aria-hidden="true"></i> Save criteria</button>
+          <button type="button" id="clearCustomCriteriaBtn" class="btn primary md"><i class="fa-solid fa-trash" aria-hidden="true"></i> Clear Custom Criteria</button>
+          <button type="button" class="btn primary modal-close-btn"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Cancel</button>
         </div>
       </form>
     </div>
