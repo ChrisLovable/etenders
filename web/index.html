@@ -7,40 +7,53 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link rel="stylesheet" href="/styles.css" />
 <link rel="manifest" href="/manifest.json" />
 <meta name="theme-color" content="#0ea5e9" />
 </head>
 <body>
 <div id="app">
-  <div class="hero-sticky">
+  <div class="sticky-header-tabs">
   <header class="app-header">
     <div class="left">
       <img src="/assets/logo.png" alt="Proper Consulting Engineers" class="logo" />
-      <button id="updateBtn" class="btn primary big">Update Latest</button>
-      <button id="dashboardBtn" class="btn primary" title="Senior reviewer dashboard">Dashboard</button>
-      <button id="employeeGroupBtn" class="btn primary" title="Manage group members for notifications">Employee group</button>
-      <button id="installBtn" class="btn primary">Install</button>
+      <button id="updateBtn" class="btn primary lg">Update Latest</button>
       <div class="titles"></div>
     </div>
   </header>
 
+  <nav class="tab-bar" role="tablist">
+    <button type="button" class="tab-btn active" role="tab" aria-selected="true" data-tab="tenders">Tenders</button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="add">Add a Tender</button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="employees">Employee groups</button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="dashboard">Dashboard</button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="mytenders">My tenders</button>
+    <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="watchalerts">Watch alerts</button>
+  </nav>
+  </div>
+
+  <div id="tabTenders" class="tab-panel active" role="tabpanel">
   <section class="controls">
     <div class="search-all-container">
       <div class="panel-title">Search all tenders</div>
       <div class="search-input-row global-search-row">
-        <input id="q" class="input" type="text" placeholder="Search keywords" />
-        <button id="clearBtn" class="btn primary" title="Clear search">Clear</button>
-        <div class="radio-container inclusive-exclusive-container" title="Match all: every filter must match. Inclusive: any filter can match.">
-          <label><input type="radio" name="mainMatchMode" value="all" /> Match all criteria ("AND")</label>
-          <label><input type="radio" name="mainMatchMode" value="expansive" checked /> Inclusive ("OR")</label>
-        </div>
-        <button id="searchBtn" class="btn primary">Search all tenders</button>
-      </div>
-      <div class="filters-row global-filters-row">
-        <select id="organ" class="select"></select>
-        <select id="category" class="select"></select>
-        <select id="advRange" class="select" title="Advertised date range">
+        <span class="input-with-icon input-clearable">
+          <i class="fa-solid fa-magnifying-glass icon-prefix" aria-hidden="true"></i>
+          <input id="q" class="input" type="text" placeholder="Search keywords" />
+          <button type="button" class="input-clear" id="searchClearBtn" aria-label="Clear search" title="Clear search">×</button>
+        </span>
+        <span class="select-with-icon">
+          <i class="fa-solid fa-building icon-prefix" aria-hidden="true"></i>
+          <select id="organ" class="select" title="Organ of State"></select>
+        </span>
+        <span class="select-with-icon">
+          <i class="fa-solid fa-tags icon-prefix" aria-hidden="true"></i>
+          <select id="category" class="select" title="Category"></select>
+        </span>
+        <span class="select-with-icon">
+          <i class="fa-solid fa-calendar-days icon-prefix" aria-hidden="true"></i>
+          <select id="advRange" class="select" title="Advertised date range">
           <option value="any">Any time</option>
           <option value="7d">Last 7 days</option>
           <option value="30d">Last 30 days</option>
@@ -50,24 +63,24 @@
           <option value="this_year">This year</option>
           <option value="last_year">Last year</option>
         </select>
-        <div class="show-inline" id="showInline">
-          <label class="show-option"><input type="checkbox" id="showAll" checked /> Show all</label>
-          <label class="show-option"><input type="checkbox" id="showInterested" /> Interested</label>
-          <label class="show-option"><input type="checkbox" id="showReviewed" /> Reviewed</label>
-          <label class="show-option"><input type="checkbox" id="showTendered" /> Tendered</label>
-          <label class="show-option"><input type="checkbox" id="showNotInterested" /> Not interested</label>
+        </span>
+        <div class="radio-container inclusive-exclusive-container" title="Match all: every filter must match. Inclusive: any filter can match.">
+          <label><input type="radio" name="mainMatchMode" value="all" /> Match all criteria ("AND")</label>
+          <label><input type="radio" name="mainMatchMode" value="expansive" checked /> Inclusive ("OR")</label>
         </div>
+        <button id="searchBtn" class="btn primary lg"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
       </div>
     </div>
     <div class="top-split">
-      <div class="top-panel">
-        <div class="panel-title">Search provincial / municipality tenders</div>
+      <div class="top-panel collapsible collapsed" id="provMuniCollapsible">
+        <button type="button" class="collapsible-header" aria-expanded="false" aria-controls="provMuniContent">
+          <i class="fa-solid fa-chevron-down collapsible-icon" aria-hidden="true"></i>
+          <span class="panel-title">View provincial / municipality tenders</span>
+        </button>
+        <div class="collapsible-content" id="provMuniContent">
         <div class="province-radios-wrap">
           <div id="provinceRadios" class="radio-container province-radios"></div>
-          <select id="province" class="select province-hidden-select"></select>
-        </div>
-        <div class="municipal-scraper-row">
-          <select id="municipalScraperSel" class="select" title="Select Municipality">
+          <select id="municipalScraperSel" class="select municipal-select" title="Select Municipality">
             <option value="">Select Municipality</option>
             <option value="matjhabeng">Matjhabeng</option>
             <option value="mangaung">Mangaung</option>
@@ -82,22 +95,112 @@
             <option value="nketoana">Nketoana</option>
             <option value="phumelela">Phumelela</option>
           </select>
-          <button id="searchMunicipalBtn" class="btn primary" title="Search province/municipality tenders" disabled>Search province/municipality</button>
+          <select id="province" class="select province-hidden-select"></select>
+        </div>
         </div>
       </div>
     </div>
-    <div class="custom-search-container">
-      <div class="panel-title">Custom Search</div>
+    <div class="custom-search-container collapsible collapsed" id="customSearchCollapsible">
+      <button type="button" class="collapsible-header" aria-expanded="false" aria-controls="customSearchContent">
+        <i class="fa-solid fa-chevron-down collapsible-icon" aria-hidden="true"></i>
+        <span class="panel-title">Custom Search</span>
+      </button>
+      <div class="collapsible-content" id="customSearchContent">
       <div class="custom-search-buttons">
-        <button id="customCriteriaBtn" class="btn primary" title="Set your saved search criteria">Custom criteria</button>
-        <button id="searchMyCriteriaBtn" class="btn primary" title="Search using your saved criteria">Search my criteria</button>
-        <button id="clearCustomCriteriaBtnMain" class="btn primary" title="Clear saved custom criteria">Clear Custom Criteria</button>
+        <button id="clearCustomCriteriaBtnMain" class="btn danger md" title="Clear saved custom criteria">Clear Custom Criteria</button>
+        <button id="customCriteriaBtn" class="btn secondary md" title="Set your saved search criteria">Custom criteria</button>
+        <button id="searchMyCriteriaBtn" class="btn primary md" title="Search using your saved criteria">Search my criteria</button>
+        <div id="customCriteriaSummary" class="muted custom-criteria-summary">No custom criteria set</div>
         <span id="updateMsg" class="muted custom-search-msg"></span>
       </div>
-      <div id="customCriteriaSummary" class="muted custom-criteria-summary">No custom criteria set</div>
+      </div>
     </div>
   </section>
   </div>
+
+  <div id="tabAdd" class="tab-panel" role="tabpanel" aria-hidden="true">
+    <div class="tab-add-placeholder"></div>
+  </div>
+
+  <div id="tabEmployees" class="tab-panel" role="tabpanel" aria-hidden="true">
+    <div class="employee-tab-content">
+      <h2 class="employee-tab-heading">Employee group</h2>
+      <p class="muted" style="margin-bottom:16px">Add members to receive notifications (email, phone).</p>
+      <form id="employeeGroupForm" class="employee-form">
+        <div class="form-row">
+          <label class="form-label">Name <span class="required">*</span></label>
+          <input type="text" id="empName" class="input" placeholder="Full name" required />
+        </div>
+        <div class="form-row">
+          <label class="form-label">Email <span class="required">*</span></label>
+          <input type="email" id="empEmail" class="input" placeholder="email@example.com" required />
+        </div>
+        <div class="form-row">
+          <label class="form-label">Phone</label>
+          <input type="tel" id="empPhone" class="input" placeholder="e.g. 083-123-4567" />
+        </div>
+        <div class="form-row">
+          <label class="form-label">Employee number</label>
+          <input type="text" id="empNumber" class="input" placeholder="e.g. EMP001" />
+        </div>
+        <button type="submit" class="btn primary">Add member</button>
+      </form>
+      <div class="employee-list-wrap">
+        <h3 class="employee-list-title">Members (<span id="employeeCount">0</span>)</h3>
+        <ul id="employeeList" class="employee-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="tabDashboard" class="tab-panel" role="tabpanel" aria-hidden="true">
+    <div class="dashboard" id="dashboardSection">
+      <div class="dashboard-header">
+        <h2>Senior reviewer dashboard</h2>
+      </div>
+      <div class="dashboard-stats" id="dashboardStats"></div>
+      <div class="dashboard-sections" id="dashboardSections"></div>
+    </div>
+  </div>
+
+  <div id="tabMyTenders" class="tab-panel" role="tabpanel" aria-hidden="true">
+    <div class="my-tenders-content">
+      <div class="panel-title">Filter my tenders</div>
+      <div class="show-inline" id="showInline">
+        <label class="show-option"><input type="checkbox" id="showAll" checked /> Show all</label>
+        <label class="show-option"><input type="checkbox" id="showInterested" /> Interested</label>
+        <label class="show-option"><input type="checkbox" id="showReviewed" /> Reviewed</label>
+        <label class="show-option"><input type="checkbox" id="showTendered" /> Tendered</label>
+        <label class="show-option"><input type="checkbox" id="showNotInterested" /> Not interested</label>
+      </div>
+    </div>
+  </div>
+
+  <div id="tabWatchAlerts" class="tab-panel" role="tabpanel" aria-hidden="true">
+    <div class="watch-alerts-content">
+      <div class="watch-alerts-header">
+        <h2 class="watch-alerts-title"><i class="fa-solid fa-bell" aria-hidden="true"></i> Watch alerts</h2>
+        <p class="watch-alerts-desc">New tenders matching your saved custom criteria (last 7 days). Set up criteria in the Tenders tab to see alerts here.</p>
+        <div class="watch-alerts-controls">
+          <select id="watchAlertsRange" class="select" title="How far back to look">
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+          </select>
+          <button type="button" id="refreshWatchAlertsBtn" class="btn primary md"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh</button>
+        </div>
+      </div>
+      <div id="watchAlertsEmpty" class="watch-alerts-empty muted" style="display:none">
+        <p>No custom criteria set. Go to the <strong>Tenders</strong> tab, expand <strong>Custom Search</strong>, and click <strong>Custom criteria</strong> to save your watch rules.</p>
+      </div>
+    </div>
+  </div>
+
+  <section class="results" id="resultsSection">
+    <div id="stats" class="muted"></div>
+    <div id="gridScroll" class="grid-scroll">
+      <div id="gridContainer" class="grid-container"></div>
+    </div>
+  </section>
 
   <div id="customCriteriaModal" class="modal" aria-hidden="true">
     <div class="modal-backdrop"></div>
@@ -148,65 +251,13 @@
           </select>
         </div>
         <div class="modal-actions">
-          <button type="submit" class="btn primary">Save criteria</button>
-          <button type="button" id="clearCustomCriteriaBtn" class="btn">Clear Custom Criteria</button>
-          <button type="button" class="btn modal-close-btn">Cancel</button>
+          <button type="submit" class="btn primary md">Save criteria</button>
+          <button type="button" id="clearCustomCriteriaBtn" class="btn danger md">Clear Custom Criteria</button>
+          <button type="button" class="btn secondary modal-close-btn">Cancel</button>
         </div>
       </form>
     </div>
   </div>
-
-  <div id="employeeGroupModal" class="modal" aria-hidden="true">
-    <div class="modal-backdrop"></div>
-    <div class="modal-content modal-content-wide">
-      <div class="modal-header">
-        <h2>Employee group</h2>
-        <button type="button" class="modal-close" aria-label="Close">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p class="muted" style="margin-bottom:16px">Add members to receive notifications (email, phone).</p>
-        <form id="employeeGroupForm" class="employee-form">
-          <div class="form-row">
-            <label class="form-label">Name <span class="required">*</span></label>
-            <input type="text" id="empName" class="input" placeholder="Full name" required />
-          </div>
-          <div class="form-row">
-            <label class="form-label">Email <span class="required">*</span></label>
-            <input type="email" id="empEmail" class="input" placeholder="email@example.com" required />
-          </div>
-          <div class="form-row">
-            <label class="form-label">Phone</label>
-            <input type="tel" id="empPhone" class="input" placeholder="e.g. 083-123-4567" />
-          </div>
-          <div class="form-row">
-            <label class="form-label">Employee number</label>
-            <input type="text" id="empNumber" class="input" placeholder="e.g. EMP001" />
-          </div>
-          <button type="submit" class="btn primary">Add member</button>
-        </form>
-        <div class="employee-list-wrap">
-          <h3 class="employee-list-title">Members (<span id="employeeCount">0</span>)</h3>
-          <ul id="employeeList" class="employee-list"></ul>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <section class="results" id="resultsSection">
-    <div id="stats" class="muted"></div>
-    <div id="gridScroll" class="grid-scroll">
-      <div id="gridContainer" class="grid-container"></div>
-    </div>
-  </section>
-
-  <section class="dashboard" id="dashboardSection" aria-hidden="true">
-    <div class="dashboard-header">
-      <h2>Senior reviewer dashboard</h2>
-      <button id="backToExplorerBtn" class="btn primary">← Back to Explorer</button>
-    </div>
-    <div class="dashboard-stats" id="dashboardStats"></div>
-    <div class="dashboard-sections" id="dashboardSections"></div>
-  </section>
 
 </div>
 

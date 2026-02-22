@@ -29,10 +29,10 @@ function resizeGridViewport() {
 }
 
 function syncHeroOffset() {
-  const hero = document.querySelector('.app-header');
+  const sticky = document.querySelector('.sticky-header-tabs');
   const root = document.documentElement;
-  if (!hero || !root) return;
-  const h = Math.ceil(hero.getBoundingClientRect().height || 0);
+  if (!sticky || !root) return;
+  const h = Math.ceil(sticky.getBoundingClientRect().height || 0);
   root.style.setProperty('--hero-offset', `${Math.max(0, h)}px`);
 }
 
@@ -162,7 +162,6 @@ function renderProvinceRadios(){
     label.appendChild(document.createTextNode(labelText));
     provinceRadios.appendChild(label);
   };
-  addRadio('', 'All provinces');
   [...provinceSel.options]
     .map(o => o.value)
     .filter(v => !!v && String(v).toLowerCase() !== 'national')
@@ -302,7 +301,7 @@ function applySearchMyCriteria(){
   filterByCustomCriteria();
 }
 
-function filterByCustomCriteria(){
+function filterByCustomCriteria(dateRangeOverride){
   const saved = loadCustomCriteria();
   const matchMode = saved.matchMode || getMatchMode();
   const useExpansive = matchMode === 'expansive' || matchMode === 'many';
@@ -311,7 +310,7 @@ function filterByCustomCriteria(){
   const organs = new Set(saved.organs || []);
   const categories = new Set(saved.categories || []);
   const services = new Set(saved.services || []);
-  const { from, to } = rangeToDates(saved.advRange || 'any');
+  const { from, to } = rangeToDates(dateRangeOverride || saved.advRange || 'any');
 
   const filtered = rows.filter(r=>{
     const matches = [];
@@ -345,6 +344,28 @@ function filterByCustomCriteria(){
   }).sort((a,b)=>b.score-a.score);
 
   render(scored.map(x=>x.row));
+}
+
+function hasCustomCriteria(){
+  const saved = loadCustomCriteria();
+  if (!saved || Object.keys(saved).length === 0) return false;
+  const has = (saved.categories?.length || 0) + (saved.services?.length || 0) + (saved.provinces?.length || 0) + (saved.organs?.length || 0) + (saved.customWords?.length || 0);
+  return has > 0;
+}
+
+function renderWatchAlerts(){
+  const emptyEl = $('watchAlertsEmpty');
+  const rangeSel = $('watchAlertsRange');
+  const range = rangeSel?.value || '7d';
+  if (!hasCustomCriteria()) {
+    if (emptyEl) { emptyEl.style.display = 'block'; }
+    displayedData = [];
+    if (gridContainer) gridContainer.innerHTML = '';
+    if (stats) stats.textContent = 'Set up custom criteria to see watch alerts.';
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+  filterByCustomCriteria(range);
 }
 
 function normalizeText(s){
@@ -542,13 +563,16 @@ function createCard(r){
       viewBtn.title = 'No municipality source URL available for this row';
     }
     const copyBtn = document.createElement('button');
-    copyBtn.className = 'btn primary sm';
-    copyBtn.textContent = 'Copy tender number';
+    copyBtn.className = 'btn secondary sm';
+    copyBtn.innerHTML = '<i class="fa-solid fa-copy" aria-hidden="true"></i> <span class="copy-btn-text">Copy tender number</span>';
     copyBtn.title = 'Copy to clipboard';
     copyBtn.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(tenderNumber);
-        const t = copyBtn.textContent; copyBtn.textContent = 'Copied!'; setTimeout(() => { copyBtn.textContent = t; }, 1500);
+        const textSpan = copyBtn.querySelector('.copy-btn-text');
+        const t = textSpan?.textContent || 'Copy tender number';
+        if (textSpan) textSpan.textContent = 'Copied!';
+        setTimeout(() => { if (textSpan) textSpan.textContent = t; }, 1500);
       } catch (_) {}
     });
     const metaActions = document.createElement('div');
@@ -854,19 +878,9 @@ function renderDashboard(){
   }
 }
 
-function showDashboard(){
-  const results = $('resultsSection');
-  const dashboard = $('dashboardSection');
-  if (results) results.style.display = 'none';
-  if (dashboard) { dashboard.style.display = 'block'; dashboard.setAttribute('aria-hidden','false'); }
-  renderDashboard();
-}
-
 function hideDashboard(){
-  const results = $('resultsSection');
-  const dashboard = $('dashboardSection');
-  if (results) results.style.display = '';
-  if (dashboard) { dashboard.style.display = 'none'; dashboard.setAttribute('aria-hidden','true'); }
+  const tendersTab = document.querySelector('.tab-btn[data-tab="tenders"]');
+  if (tendersTab) tendersTab.click();
   requestAnimationFrame(resizeGridViewport);
 }
 
@@ -919,9 +933,6 @@ function rangeToDates(value){
   }
 }
 
-$('dashboardBtn')?.addEventListener('click', showDashboard);
-$('backToExplorerBtn')?.addEventListener('click', hideDashboard);
-
 let employees = [];
 async function loadEmployees(){
   try {
@@ -944,7 +955,7 @@ function renderEmployeeList(){
         <div class="emp-name">${escapeHtml(e.name)}</div>
         <div class="emp-details">${escapeHtml(e.email)}${e.phone ? ' · ' + escapeHtml(e.phone) : ''}${e.employeeNumber ? ' · #' + escapeHtml(e.employeeNumber) : ''}</div>
       </div>
-      <button type="button" class="btn emp-remove" data-id="${escapeHtml(e.id)}" title="Remove">Remove</button>
+      <button type="button" class="btn danger sm emp-remove" data-id="${escapeHtml(e.id)}" title="Remove">Remove</button>
     `;
     li.querySelector('.emp-remove').addEventListener('click', async () => {
       try {
@@ -956,18 +967,6 @@ function renderEmployeeList(){
   }
 }
 function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
-function openEmployeeGroupModal(){
-  const modal = $('employeeGroupModal');
-  if (modal) modal.setAttribute('aria-hidden', 'false');
-  loadEmployees();
-}
-function closeEmployeeGroupModal(){
-  const modal = $('employeeGroupModal');
-  if (modal) modal.setAttribute('aria-hidden', 'true');
-}
-$('employeeGroupBtn')?.addEventListener('click', openEmployeeGroupModal);
-$('employeeGroupModal')?.querySelector('.modal-backdrop')?.addEventListener('click', closeEmployeeGroupModal);
-$('employeeGroupModal')?.querySelector('.modal-close')?.addEventListener('click', closeEmployeeGroupModal);
 $('employeeGroupForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = $('empName')?.value?.trim();
@@ -993,36 +992,28 @@ $('employeeGroupForm')?.addEventListener('submit', async (e) => {
   } catch (_) { alert('Failed to add member'); }
 });
 $('searchBtn')?.addEventListener('click', async ()=>{ await runWithBusy('Searching tenders...', async ()=>{ hideDashboard(); municipalScrapeView = null; if (provinceSel) provinceSel.value = ''; setProvinceRadioValue(''); const muniSel = $('municipalScraperSel'); if (muniSel) muniSel.value = ''; if (typeof updateMunicipalSearchButtonState === 'function') updateMunicipalSearchButtonState(); filterRows(); }, $('searchBtn'), 'Searching...'); });
-$('clearBtn')?.addEventListener('click', async ()=>{
-  await runWithBusy('Clearing filters...', async ()=>{
-    hideDashboard();
+{
+  const searchClearBtn = $('searchClearBtn');
+  const inputWrap = document.querySelector('.input-clearable');
+  const updateClearVisibility = () => {
+    if (inputWrap) inputWrap.classList.toggle('has-text', !!getSearchValue());
+  };
+  qInput?.addEventListener('input', updateClearVisibility);
+  qInput?.addEventListener('focus', updateClearVisibility);
+  searchClearBtn?.addEventListener('click', () => {
     setSearchValue('');
     if (qInput) qInput.value = '';
-    if (advRange) advRange.value = 'any';
-    if (provinceSel) provinceSel.value = '';
-    setProvinceRadioValue('');
-    if (organSel) organSel.value = '';
-    if (categorySel) categorySel.value = '';
-    const muniSel = $('municipalScraperSel');
-    if (muniSel) muniSel.value = '';
-    const showAll = $('showAll');
-    const showInterested = $('showInterested');
-    const showReviewed = $('showReviewed');
-    const showTendered = $('showTendered');
-    const showNotInterested = $('showNotInterested');
-    if (showAll) showAll.checked = true;
-    if (showInterested) showInterested.checked = false;
-    if (showReviewed) showReviewed.checked = false;
-    if (showTendered) showTendered.checked = false;
-    if (showNotInterested) showNotInterested.checked = false;
-    municipalScrapeView = null;
-    if (typeof updateMunicipalSearchButtonState === 'function') updateMunicipalSearchButtonState();
+    updateClearVisibility();
     filterRows();
-  }, $('clearBtn'), 'Clearing...');
-});
+  });
+  updateClearVisibility();
+}
 
 $('customCriteriaBtn')?.addEventListener('click', openCriteriaModal);
 $('searchMyCriteriaBtn')?.addEventListener('click', async ()=>{ await runWithBusy('Searching custom criteria...', async ()=> applySearchMyCriteria(), $('searchMyCriteriaBtn'), 'Searching...'); });
+
+$('refreshWatchAlertsBtn')?.addEventListener('click', ()=>{ renderWatchAlerts(); });
+$('watchAlertsRange')?.addEventListener('change', ()=>{ renderWatchAlerts(); });
 
 $('customCriteriaModal')?.querySelector('.modal-backdrop')?.addEventListener('click', closeCriteriaModal);
 $('customCriteriaModal')?.querySelector('.modal-close')?.addEventListener('click', closeCriteriaModal);
@@ -1037,7 +1028,6 @@ $('clearCustomCriteriaBtn')?.addEventListener('click', clearCustomCriteria);
 $('clearCustomCriteriaBtnMain')?.addEventListener('click', clearCustomCriteria);
 document.addEventListener('keydown', (e)=>{
   if (e.key === 'Escape' && $('customCriteriaModal')?.getAttribute('aria-hidden') === 'false') closeCriteriaModal();
-  if (e.key === 'Escape' && $('employeeGroupModal')?.getAttribute('aria-hidden') === 'false') closeEmployeeGroupModal();
 });
 
 $('customCriteriaForm')?.addEventListener('submit', (e)=>{
@@ -1107,10 +1097,50 @@ window.addEventListener('resize', () => {
   requestAnimationFrame(syncHeroOffset);
 });
 window.addEventListener('load', () => requestAnimationFrame(syncHeroOffset));
+
+// Tab switching: Tenders | Add a Tender | Employee groups | Dashboard | My tenders
+const tabToPanel = { tenders: 'tabTenders', add: 'tabAdd', employees: 'tabEmployees', dashboard: 'tabDashboard', mytenders: 'tabMyTenders', watchalerts: 'tabWatchAlerts' };
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const tab = btn.dataset.tab;
+    showLoading('Loading...');
+    const start = performance.now();
+    const minSpinMs = 150;
+
+    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+    document.querySelectorAll('.tab-panel').forEach(p => { p.classList.remove('active'); p.setAttribute('aria-hidden', 'true'); });
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+    const panelId = tabToPanel[tab];
+    const panel = panelId ? document.getElementById(panelId) : null;
+    if (panel) { panel.classList.add('active'); panel.setAttribute('aria-hidden', 'false'); }
+    const resultsSection = $('resultsSection');
+    if (resultsSection) resultsSection.style.display = (tab === 'tenders' || tab === 'mytenders' || tab === 'watchalerts') ? '' : 'none';
+    if (tab === 'dashboard') renderDashboard();
+    if (tab === 'employees') await loadEmployees();
+    if (tab === 'watchalerts') renderWatchAlerts();
+    if (tab === 'mytenders' || tab === 'tenders' || tab === 'watchalerts') requestAnimationFrame(resizeGridViewport);
+
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const elapsed = performance.now() - start;
+    if (elapsed < minSpinMs) await new Promise(r => setTimeout(r, minSpinMs - elapsed));
+    hideLoading();
+  });
+});
+
+document.querySelectorAll('.collapsible-header').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const collapsible = btn.closest('.collapsible');
+    if (collapsible) {
+      collapsible.classList.toggle('collapsed');
+      btn.setAttribute('aria-expanded', collapsible.classList.contains('collapsed') ? 'false' : 'true');
+    }
+  });
+});
+
 const updateBtn = document.getElementById('updateBtn');
 const updateMsg = document.getElementById('updateMsg');
 const municipalScraperSel = $('municipalScraperSel');
-const searchMunicipalBtn = $('searchMunicipalBtn');
 const municipalSourceById = {
   matjhabeng: 'Matjhabeng',
   mangaung: 'Mangaung',
@@ -1241,12 +1271,7 @@ function municipalityToken(v) {
   return String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 }
 
-function updateMunicipalSearchButtonState() {
-  if (!searchMunicipalBtn) return;
-  const hasProvince = !!(provinceSel && provinceSel.value);
-  const hasMunicipality = !!(municipalScraperSel && municipalScraperSel.value);
-  searchMunicipalBtn.disabled = !(hasProvince || hasMunicipality);
-}
+function updateMunicipalSearchButtonState() {}
 
 // Load municipal scrapers list and populate dropdown
 async function loadMunicipalScrapers(province = '') {
@@ -1332,25 +1357,6 @@ async function runMunicipalScopedSearch() {
   if (updateMsg) updateMsg.textContent = '';
 }
 
-if (searchMunicipalBtn) {
-  searchMunicipalBtn.addEventListener('click', async () => {
-    const municipality = municipalScraperSel?.value;
-    if (!municipality) return;
-    const prevMsg = updateMsg?.textContent || '';
-    const selectedName = municipalScraperSel?.selectedOptions?.[0]?.textContent || municipality;
-    setButtonLoading(searchMunicipalBtn, true, 'Loading...');
-    showLoading(`Loading ${selectedName} tenders...`);
-    try {
-      await runMunicipalScopedSearch();
-    } finally {
-      setButtonLoading(searchMunicipalBtn, false);
-      hideLoading();
-      searchMunicipalBtn.disabled = !municipality;
-      setTimeout(() => { if (updateMsg) updateMsg.textContent = prevMsg; }, 8000);
-    }
-  });
-}
-updateMunicipalSearchButtonState();
 
 if (updateBtn) {
   updateBtn.addEventListener('click', async () => {
@@ -1394,36 +1400,6 @@ if (updateBtn) {
 // Register service worker (required for PWA install prompt)
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(reg => reg.update()).catch(()=>{});
-}
-
-// PWA Install button: visible when not installed; hide when running as installed app
-const installBtn = $('installBtn');
-let deferredPrompt;
-if (installBtn) {
-  const hideInstall = () => { installBtn.style.display = 'none'; };
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  if (isStandalone) hideInstall();
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-  });
-  window.addEventListener('appinstalled', () => { deferredPrompt = null; hideInstall(); });
-  installBtn.addEventListener('click', async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') { deferredPrompt = null; hideInstall(); }
-    } else if (isIOS) {
-      alert('To install: tap the Share button (square with arrow), then "Add to Home Screen"');
-    } else {
-      const isChrome = /Chrome/.test(navigator.userAgent) && !/Edge/.test(navigator.userAgent);
-      const isEdge = /Edge/.test(navigator.userAgent);
-      if (isChrome) alert('To install: Click the ⋮ menu (top-right) → "Install eTenders Explorer" or "Add to Home Screen"');
-      else if (isEdge) alert('To install: Click the ⋯ menu (top-right) → "Apps" → "Install this site as an app"');
-      else alert('To install: Look in your browser menu for "Install app", "Add to Home Screen", or "Save page"');
-    }
-  });
 }
 
 (async function init(){
